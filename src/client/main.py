@@ -57,7 +57,14 @@ def main():
         if choice.isdigit() and 1 <= int(choice) <= len(servers):
             target_ip, target_port = servers[int(choice)-1]
     else:
-        print("No servers found via discovery. Using default localhost:5000")
+        print("No servers found via discovery.")
+    
+    manual = input("\nEnter server IP manually? (y/N): ")
+    if manual.lower() == 'y':
+        target_ip = input("Enter Server IP: ")
+        target_port = int(input("Enter Server Port (default 5000): ") or 5000)
+    elif not servers:
+        print("Using default localhost:5000")
 
     client = connect_to_server(target_ip, target_port)
     if not client:
