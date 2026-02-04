@@ -6,7 +6,7 @@
 #include <sys/socket.h>
 
 #define DEFAULT_PORT 5002
-#define BUFFER_SIZE 4096
+#define BUFFER_SIZE 65536
 
 int connect_to_server(const char *ip, int port) {
     int sock;

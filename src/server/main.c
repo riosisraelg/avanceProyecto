@@ -10,7 +10,7 @@
 #include <errno.h>
 
 #define TCP_PORT 5002
-#define BUFFER_SIZE 4096
+#define BUFFER_SIZE 65536
 
 // Función para listar procesos (estilo ps)
 void list_processes(char *buffer, size_t size) {
@@ -18,7 +18,7 @@ void list_processes(char *buffer, size_t size) {
     char path[1035];
 
     // Ejecuta 'ps' para obtener PID y comando
-    fp = popen("ps -e -o pid,comm | head -n 20", "r");
+    fp = popen("ps -e -o pid,comm", "r");
     if (fp == NULL) {
         snprintf(buffer, size, "Error: Failed to run ps command\n");
         return;
