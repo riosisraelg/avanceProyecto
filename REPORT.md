@@ -1,48 +1,51 @@
-# Project Report: Distributed Process Management System
+# Project Report: Distributed Process Management System (C-POSIX Version)
 
 ## Overview
-This project implements a distributed system capable of managing operating system processes remotely. It fulfills the requirements of process management, network communication, and middleware-based distribution (via service discovery).
+Este proyecto implementa un sistema distribuido de gestión de procesos remotos migrado de Python a **C (POSIX)** para optimizar el rendimiento y la eficiencia en entornos de servidor como **AWS EC2**. El sistema permite a clientes externos administrar, monitorear y ejecutar tareas en un servidor remoto mediante una conexión TCP persistente.
 
 ## Implementation Details
 
-### Task 1: Structure & Process Management
-*   **Module**: `src/server/main.py` (ProcessManager class)
-*   **Functionality**:
-    *   **Listing**: Uses `ps` (Unix) or `tasklist` (Windows) to parse active processes.
-    *   **Starting**: Uses `subprocess.Popen` to launch non-blocking commands.
-    *   **Stopping**: Uses `os.kill` with signal 9 (SIGKILL) to terminate processes.
-    *   **Monitoring**: Checks process existence using signal 0.
+### Task 1: Gestión de Procesos (Server-side)
+*   **Módulo**: `src/server/main.c`
+*   **Funcionalidad**:
+    *   **Listing**: Ejecuta comandos del sistema (`ps`) mediante `popen()` para capturar la salida de los procesos activos.
+    *   **Starting**: Utiliza la primitiva `fork()` para crear un proceso hijo y `execvp()` para reemplazar la imagen del proceso con el comando solicitado. La salida se redirige a `/dev/null` para mantener la independencia del servidor.
+    *   **Stopping**: Implementa la llamada al sistema `kill()` con la señal `SIGKILL` (9) para asegurar la detención inmediata del PID especificado.
 
-### Task 2: Network Communication (TCP/IP)
-*   **Protocol**: TCP Sockets.
-*   **Server**: Multithreaded server (`threading.Thread`) handling one client per thread.
-*   **Client**: Connects to the server IP/Port and sends text-based commands.
-*   **Data Exchange**: Commands are sent as strings; responses are text or JSON (for lists).
+### Task 2: Comunicación de Red (TCP/IP Multihilo)
+*   **Protocolo**: TCP Sockets.
+*   **Arquitectura del Servidor**: Basada en hilos nativos (`pthreads`). El servidor principal acepta conexiones y delega cada cliente a un hilo independiente (`pthread_create` + `pthread_detach`), permitiendo múltiples administradores simultáneos sin bloqueo.
+*   **Optimización AWS**: Se eliminó el descubrimiento UDP (broadcast) debido a que los clientes externos a la VPC no pueden usar tráfico de difusión en internet, optando por una conexión directa vía IP/DNS.
 
-### Task 3: Distributed Systems (Middleware/Discovery)
-*   **Mechanism**: UDP Broadcast.
-*   **Workflow**:
-    1.  Server listens on UDP port 5001.
-    2.  Client sends `DISCOVER_SERVERS` to `<broadcast>`.
-    3.  Server responds with its TCP port.
-    4.  Client aggregates responses and allows the user to choose a target server.
-*   This acts as a simple "Directory Service" or Middleware layer allowing dynamic connection without hardcoded IPs.
+### Task 3: Comandos Personalizados y Extensiones
+*   Se desarrollaron micro-programas en C (`src/commands/`) para demostrar la capacidad de ejecución:
+    *   `hola`: Demostración de latencia controlada (impresión letra a letra).
+    *   `juego`: Lógica de interactividad básica.
+    *   `v21`: Simulación de juego de cartas 21.
+*   **Integración**: Se utilizan *symlinks* en el PATH del sistema para permitir la ejecución de estos comandos mediante nombres cortos (ej. `START v21`).
 
-## Source Code Organization
+## Estructura del Proyecto
 
 ```
 .
-├── README.md           # Instructions
-├── REPORT.md           # This report
+├── Makefile.server     # Compilación exclusiva del servidor y comandos
+├── Makefile.client     # Compilación exclusiva del cliente
+├── scripts
+│   └── setup_path.sh   # Configuración de symlinks y entorno
+├── bin                 # Binarios de comandos personalizados
 ├── src
 │   ├── client
-│   │   └── main.py     # Client application
-│   └── server
-│       └── main.py     # Server application with ProcessManager
-└── docs                # Documentation folder
+│   │   └── main.c      # Cliente en C (Interactivo)
+│   ├── server
+│   │   └── main.c      # Servidor multihilo en C
+│   └── commands
+│       ├── hola.c      # Comando: Hola Mundo Lento
+│       ├── juego.c     # Comando: Adivinar número
+│       └── v21.c       # Comando: Blackjack 21
+└── REPORT.md           # Este reporte
 ```
 
-## Future Improvements
-*   **Security**: Add authentication (SSL/TLS or tokens) to prevent unauthorized process manipulation.
-*   **Advanced Monitoring**: Integrate `psutil` library for real-time CPU/Memory percentages.
-*   **Concurrency**: Use `asyncio` for better scalability on the server side.
+## Casos de Uso
+1.  **Monitoreo de Salud**: Uso de `LIST` para verificar que servicios críticos en la instancia AWS sigan activos.
+2.  **Mantenimiento Remoto**: Ejecución de scripts de limpieza o respaldos mediante `START`.
+3.  **Recuperación de Desastres**: Detención de procesos zombies o fuera de control que consumen CPU excesiva mediante `STOP`.

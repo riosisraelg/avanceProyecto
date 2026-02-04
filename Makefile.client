@@ -1,0 +1,10 @@
+CC = gcc
+CFLAGS = -Wall
+
+all: client_bin
+
+client_bin: src/client/main.c
+	$(CC) $(CFLAGS) -o client_bin src/client/main.c
+
+clean:
+	rm -f client_bin

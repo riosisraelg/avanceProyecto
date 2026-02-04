@@ -1,39 +1,64 @@
-# Process Management System
+# Remote Process Manager (C/POSIX)
 
-A distributed client-server application for managing processes across a network.
+Este proyecto es un sistema de administración de procesos distribuido desarrollado en C. Permite a un cliente remoto conectarse a un servidor (por ejemplo, en AWS EC2) para listar, iniciar y detener procesos del sistema operativo.
 
-## Features
+## Características Principales
 
-1.  **Process Management**: List, start, stop, and monitor processes.
-2.  **Networked Architecture**: TCP/IP socket communication.
-3.  **Service Discovery**: UDP Broadcast to find servers automatically.
+*   **Alto Rendimiento**: Desarrollado íntegramente en C para un consumo mínimo de recursos.
+*   **Multihilo**: El servidor puede atender a múltiples clientes simultáneamente usando hilos POSIX.
+*   **Gestión Real de Procesos**: Usa `fork/exec` para lanzar comandos reales del sistema.
+*   **Despliegue en AWS**: Optimizado para conexiones directas TCP a través de firewalls (Security Groups).
 
-## Requirements
+## Requisitos
 
-*   Python 3.x
+*   Compilador `gcc`
+*   Herramienta `make`
+*   Sistema operativo basado en POSIX (Linux/Ubuntu para AWS, macOS para local).
 
-## Usage
+## Compilación
 
-### 1. Start the Server
-Run the server on the machine(s) you want to manage.
+El proyecto cuenta con Makefiles independientes para facilitar el despliegue:
+
+### En el Servidor (AWS/Linux):
+```bash
+make -f Makefile.server
+```
+Esto generará el ejecutable `server_bin` y los comandos adicionales en la carpeta `bin/`.
+
+### En el Cliente (Local):
+```bash
+make -f Makefile.client
+```
+Esto generará el ejecutable `client_bin`.
+
+## Configuración y Ejecución
+
+### 1. Preparar el Servidor
+Para que el servidor reconozca los comandos personalizados (`hola`, `juego`, `v21`), ejecuta el script de configuración para crear los accesos directos:
 
 ```bash
-python3 src/server/main.py
+chmod +x scripts/setup_path.sh
+./scripts/setup_path.sh
 ```
 
-### 2. Start the Client
-Run the client on any machine in the same network.
-
+Inicia el servidor:
 ```bash
-python3 src/client/main.py
+./server_bin
 ```
 
-The client will automatically scan for available servers. Select one to connect to.
+### 2. Conectar el Cliente
+Ejecuta el cliente y proporciona la IP de tu servidor:
+```bash
+./client_bin
+```
 
-### Commands
+## Comandos Disponibles
 
-*   `LIST`: Show active processes.
-*   `START <command>`: Execute a shell command (e.g., `START sleep 10`).
-*   `STOP <pid>`: Kill a process by PID.
-*   `MONITOR <pid>`: Check if a process is running.
-*   `EXIT`: Close connection.
+*   `LIST`: Muestra los primeros 20 procesos activos en el servidor.
+*   `START <comando>`: Inicia un proceso (ej. `START v21`, `START sleep 100`).
+*   `STOP <pid>`: Detiene un proceso usando su ID.
+*   `EXIT`: Finaliza la sesión.
+
+## Notas de Seguridad (AWS)
+Asegúrate de abrir los siguientes puertos en el **Security Group** de tu instancia:
+*   **TCP 5002**: Entrada para el tráfico del administrador.
