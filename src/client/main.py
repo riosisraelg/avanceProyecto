@@ -46,7 +46,7 @@ def main():
     servers = discover_servers()
     
     target_ip = "127.0.0.1"
-    target_port = 5000
+    target_port = 5002
     
     if servers:
         print("\nAvailable Servers:")
@@ -62,9 +62,9 @@ def main():
     manual = input("\nEnter server IP manually? (y/N): ")
     if manual.lower() == 'y':
         target_ip = input("Enter Server IP: ")
-        target_port = int(input("Enter Server Port (default 5000): ") or 5000)
+        target_port = int(input("Enter Server Port (default 5002): ") or 5002)
     elif not servers:
-        print("Using default localhost:5000")
+        print("Using default localhost:5002")
 
     client = connect_to_server(target_ip, target_port)
     if not client:

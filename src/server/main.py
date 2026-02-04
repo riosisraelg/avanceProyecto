@@ -8,7 +8,7 @@ import time
 
 # Configuration
 HOST = '0.0.0.0'
-TCP_PORT = 5000
+TCP_PORT = 5002
 UDP_PORT = 5001
 BUFFER_SIZE = 4096
 
