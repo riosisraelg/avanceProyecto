@@ -5,6 +5,7 @@ Este proyecto es un sistema de administración de procesos distribuido desarroll
 ## Características Principales
 
 *   **Alto Rendimiento**: Desarrollado íntegramente en C para un consumo mínimo de recursos.
+*   **Capacidad Extendida**: Buffers de 64KB para manejar listas de procesos completas.
 *   **Multihilo**: El servidor puede atender a múltiples clientes simultáneamente usando hilos POSIX.
 *   **Gestión Real de Procesos**: Usa `fork/exec` para lanzar comandos reales del sistema.
 *   **Despliegue en AWS**: Optimizado para conexiones directas TCP a través de firewalls (Security Groups).
@@ -15,50 +16,58 @@ Este proyecto es un sistema de administración de procesos distribuido desarroll
 *   Herramienta `make`
 *   Sistema operativo basado en POSIX (Linux/Ubuntu para AWS, macOS para local).
 
-## Compilación
-
-El proyecto cuenta con Makefiles independientes para facilitar el despliegue:
+## Compilación e Instalación
 
 ### En el Servidor (AWS/Linux):
-```bash
-make -f Makefile.server
-```
-Esto generará el ejecutable `server_bin` y los comandos adicionales en la carpeta `bin/`.
+1. **Compilar e instalar comandos globales**:
+   ```bash
+   make -f Makefile.server install
+   ```
+   *Esto genera el ejecutable `server_bin`, compila los juegos/scripts en `bin/` y crea los accesos directos (symlinks) en `/usr/local/bin`.*
 
 ### En el Cliente (Local):
-```bash
-make -f Makefile.client
+1. **Compilar**:
+   ```bash
+   make -f Makefile.client
+   ```
+
+## Configuración del Servicio (Systemd)
+
+Para que el servidor corra como un demonio en AWS, crea el archivo `/etc/systemd/system/proc-manager.service`:
+
+```ini
+[Unit]
+Description=Remote Process Manager Server
+After=network.target
+
+[Service]
+WorkingDirectory=/root/avanceProyecto
+ExecStart=/root/avanceProyecto/server_bin
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target
 ```
-Esto generará el ejecutable `client_bin`.
 
-## Configuración y Ejecución
+**Comandos útiles:**
+* `sudo systemctl daemon-reload`
+* `sudo systemctl enable proc-manager`
+* `sudo systemctl start proc-manager`
+* `sudo systemctl status proc-manager`
 
-### 1. Preparar el Servidor
-Para que el servidor reconozca los comandos personalizados (`hola`, `juego`, `v21`), ejecuta el script de configuración para crear los accesos directos:
+## Uso del Cliente
 
-```bash
-chmod +x scripts/setup_path.sh
-./scripts/setup_path.sh
-```
-
-Inicia el servidor:
-```bash
-./server_bin
-```
-
-### 2. Conectar el Cliente
 Ejecuta el cliente y proporciona la IP de tu servidor:
 ```bash
 ./client_bin
 ```
 
-## Comandos Disponibles
-
-*   `LIST`: Muestra los primeros 20 procesos activos en el servidor.
+### Comandos Disponibles
+*   `LIST`: Muestra **todos** los procesos activos en el servidor (hasta 64KB de datos).
 *   `START <comando>`: Inicia un proceso (ej. `START v21`, `START sleep 100`).
 *   `STOP <pid>`: Detiene un proceso usando su ID.
 *   `EXIT`: Finaliza la sesión.
 
 ## Notas de Seguridad (AWS)
-Asegúrate de abrir los siguientes puertos en el **Security Group** de tu instancia:
-*   **TCP 5002**: Entrada para el tráfico del administrador.
+Asegúrate de abrir el puerto **TCP 5002** en el **Security Group** de tu instancia.
