@@ -1,160 +1,60 @@
-#include <stdio.h>
+/**
+ * main.c — Punto de entrada mínimo del cliente TUI.
+ *
+ * Orquestador delgado que delega toda la lógica de UI al módulo TUI
+ * y toda la lógica de red al módulo net.
+ */
+
+#include "tui.h"
+#include "net.h"
+
+#include <signal.h>
 #include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
 
-#ifdef _WIN32
-    #include <winsock2.h>
-    #include <ws2tcpip.h>
-    #pragma comment(lib, "ws2_32.lib")
-    #define close_socket closesocket
-#else
-    #include <unistd.h>
-    #include <arpa/inet.h>
-    #include <sys/socket.h>
-    #include <sys/time.h>
-    #define close_socket close
-    typedef int SOCKET;
-    #define INVALID_SOCKET -1
-#endif
+/* Estado global para que el handler de señales pueda acceder a él. */
+static TUIState *g_state = NULL;
 
-#define DEFAULT_PORT 5002
-#define BUFFER_SIZE 65536
-
-void to_uppercase(char *str) {
-    for (int i = 0; str[i]; i++) {
-        str[i] = (char)toupper((unsigned char)str[i]);
+/**
+ * Handler para SIGINT (Ctrl+C).
+ * Llama a tui_shutdown() (que internamente invoca endwin() y net_close())
+ * y luego limpia la plataforma de red antes de salir con código 0.
+ */
+static void sigint_handler(int sig) {
+    (void)sig;
+    if (g_state != NULL) {
+        tui_shutdown(g_state);
+        g_state = NULL;
     }
+    net_cleanup_platform();
+    exit(0);
 }
 
-SOCKET connect_to_server(const char *ip, int port) {
-    SOCKET sock;
-    struct sockaddr_in server;
-
-#ifdef _WIN32
-    WSADATA wsa;
-    if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
-        printf("WSAStartup failed\n");
-        return INVALID_SOCKET;
-    }
-#endif
-
-    sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock == INVALID_SOCKET) {
-        printf("Could not create socket\n");
-        return INVALID_SOCKET;
+int main(void) {
+    if (net_init_platform() != 0) {
+        return EXIT_FAILURE;
     }
 
-    server.sin_addr.s_addr = inet_addr(ip);
-    server.sin_family = AF_INET;
-    server.sin_port = htons(port);
-
-#ifndef _WIN32
-    struct timeval timeout;
-    timeout.tv_sec = 5;
-    timeout.tv_usec = 0;
-    setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
-#endif
-
-    if (connect(sock, (struct sockaddr *)&server, sizeof(server)) < 0) {
-        perror("Connection failed");
-        close_socket(sock);
-        return INVALID_SOCKET;
+    TUIState *state = tui_init();
+    if (state == NULL) {
+        net_cleanup_platform();
+        return EXIT_FAILURE;
     }
 
-    return sock;
-}
+    g_state = state;
+    signal(SIGINT, sigint_handler);
 
-int main() {
-    char ip[INET_ADDRSTRLEN];
-    int port = DEFAULT_PORT;
-    SOCKET sock;
-    char message[BUFFER_SIZE];
-    char final_msg[BUFFER_SIZE];
-    char server_reply[BUFFER_SIZE];
-    char input_buffer[100];
-
-    printf("=== Remote Process Manager Client (Cross-Platform) ===\n");
-    
-    printf("Enter Server IP (default 127.0.0.1): ");
-    if (fgets(input_buffer, sizeof(input_buffer), stdin) != NULL) {
-        input_buffer[strcspn(input_buffer, "\n")] = 0;
-        if (strlen(input_buffer) > 0) strcpy(ip, input_buffer);
-        else strcpy(ip, "127.0.0.1");
+    if (tui_connection_dialog(state) != 0) {
+        tui_shutdown(state);
+        g_state = NULL;
+        net_cleanup_platform();
+        return EXIT_SUCCESS;
     }
 
-    printf("Enter Port (default %d): ", DEFAULT_PORT);
-    if (fgets(input_buffer, sizeof(input_buffer), stdin) != NULL) {
-        input_buffer[strcspn(input_buffer, "\n")] = 0;
-        if (strlen(input_buffer) > 0) port = atoi(input_buffer);
-    }
+    tui_run(state);
 
-    printf("\n[CONNECTING] Attempting to connect to %s:%d...\n", ip, port);
-    sock = connect_to_server(ip, port);
-    
-    if (sock == INVALID_SOCKET) {
-        printf("[ERROR] Could not connect to server.\n");
-        return 1;
-    }
+    tui_shutdown(state);
+    g_state = NULL;
+    net_cleanup_platform();
 
-    printf("[SUCCESS] Connected!\n");
-    printf("--------------------------------------------------\n");
-    printf("Available Commands:\n");
-    printf("  1. LIST          -> List all active processes\n");
-    printf("  2. START <cmd>   -> Start a new process\n");
-    printf("  3. STOP <pid>    -> Kill a process by PID\n");
-    printf("  4. EXIT          -> Disconnect and exit\n");
-    printf("--------------------------------------------------\n");
-
-    while (1) {
-        printf("remote@%s:%d> ", ip, port);
-        if (fgets(message, BUFFER_SIZE, stdin) == NULL) break;
-        message[strcspn(message, "\n")] = 0;
-
-        if (strlen(message) == 0) continue;
-
-        char temp_msg[BUFFER_SIZE];
-        strcpy(temp_msg, message);
-        char *cmd_part = strtok(temp_msg, " ");
-        char *args_part = strtok(NULL, "");
-
-        if (cmd_part == NULL) continue;
-
-        char normalized_cmd[32];
-        strncpy(normalized_cmd, cmd_part, 31);
-        normalized_cmd[31] = '\0';
-        to_uppercase(normalized_cmd);
-
-        if (strcmp(normalized_cmd, "1") == 0) strcpy(normalized_cmd, "LIST");
-        else if (strcmp(normalized_cmd, "2") == 0) strcpy(normalized_cmd, "START");
-        else if (strcmp(normalized_cmd, "3") == 0) strcpy(normalized_cmd, "STOP");
-        else if (strcmp(normalized_cmd, "4") == 0) strcpy(normalized_cmd, "EXIT");
-
-        if (args_part) {
-            snprintf(final_msg, BUFFER_SIZE, "%s %s", normalized_cmd, args_part);
-        } else {
-            snprintf(final_msg, BUFFER_SIZE, "%s", normalized_cmd);
-        }
-
-        if (send(sock, final_msg, (int)strlen(final_msg), 0) < 0) {
-            puts("Send failed");
-            break;
-        }
-
-        if (strcmp(normalized_cmd, "EXIT") == 0) break;
-
-        int len = recv(sock, server_reply, BUFFER_SIZE - 1, 0);
-        if (len <= 0) {
-            puts("Server closed connection");
-            break;
-        }
-        server_reply[len] = '\0';
-        printf("%s\n", server_reply);
-    }
-
-    close_socket(sock);
-#ifdef _WIN32
-    WSACleanup();
-#endif
-    return 0;
+    return EXIT_SUCCESS;
 }

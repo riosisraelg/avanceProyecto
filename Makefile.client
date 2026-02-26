@@ -1,10 +1,24 @@
 CC = gcc
 CFLAGS = -Wall
 
+SRC = src/client/main.c \
+      src/client/tui.c \
+      src/client/panels.c \
+      src/client/colors.c \
+      src/client/input.c \
+      src/client/net.c \
+      src/client/process.c
+
+ifeq ($(OS),Windows_NT)
+    LDFLAGS = -lpdcurses -lws2_32
+else
+    LDFLAGS = -lncurses
+endif
+
 all: client_bin
 
-client_bin: src/client/main.c
-	$(CC) $(CFLAGS) -o client_bin src/client/main.c
+client_bin: $(SRC)
+	$(CC) $(CFLAGS) -o client_bin $(SRC) $(LDFLAGS)
 
 clean:
 	rm -f client_bin

@@ -1,0 +1,15 @@
+[Unit]
+Description=Remote Process Manager Server
+After=network.target
+
+[Service]
+Type=simple
+# Ruta al directorio del proyecto del usuario ec2-user
+WorkingDirectory=/home/ec2-user/avanceProyecto
+# Ruta al ejecutable compilado (server_bin)
+ExecStart=/home/ec2-user/avanceProyecto/server_bin
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target

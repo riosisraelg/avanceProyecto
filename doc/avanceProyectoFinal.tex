@@ -1,0 +1,154 @@
+\documentclass{beamer}
+
+% Tema
+\usetheme{Pittsburgh}
+\usecolortheme{dove}
+\setbeamertemplate{navigation symbols}{}
+
+% Paquetes
+\usepackage[spanish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{hyperref}
+\usepackage{graphicx}
+
+% Datos
+\title{Remote Process Manager}
+\subtitle{Internals de Sistemas Distribuidos y Programación POSIX}
+\author{Equipo de Desarrollo}
+\institute{Ingeniería de Sistemas / Kernel & Networking}
+\date{\today}
+
+\begin{document}
+
+% Portada
+\begin{frame}
+  \titlepage
+\end{frame}
+
+% Índice
+\begin{frame}{Contenido}
+  \tableofcontents
+\end{frame}
+
+% Sección 1: Arquitectura
+\section{Arquitectura del Sistema}
+
+\begin{frame}{Visión General de la Arquitectura}
+  El sistema implementa una arquitectura **Cliente-Servidor** robusta basada en el estándar POSIX, diseñada para alto rendimiento y bajo consumo de recursos.
+  
+  \begin{block}{Componentes Principales}
+  \begin{itemize}
+    \item \textbf{Lenguaje:} C (ISO/IEC 9899) para control total de memoria y sistema.
+    \item \textbf{Transporte:} TCP/IP (Sockets de flujo) garantizando entrega de datos.
+    \item \textbf{Modelo de Concurrencia:} Multihilo (\texttt{pthreads}) para atención simultánea.
+    \item \textbf{Infraestructura:} Optimizado para despliegue en Linux (AWS EC2).
+  \end{itemize}
+  \end{block}
+\end{frame}
+
+% Sección 2: Conexión
+\section{Ingeniería de Conexión}
+
+\begin{frame}{Ciclo de Vida de la Conexión (TCP)}
+  El establecimiento de la comunicación sigue un flujo estricto para garantizar estabilidad:
+  
+  \begin{enumerate}
+      \item \textbf{Inicialización:} Creación del Socket Stream (\texttt{AF\_INET, SOCK\_STREAM}).
+      \item \textbf{Binding:} Enlace al puerto 5002 en todas las interfaces (\texttt{INADDR\_ANY}).
+      \item \textbf{Listening:} Cola de espera para conexiones entrantes.
+      \item \textbf{Handshake:} Aceptación de cliente (\texttt{accept}) y delegación.
+  \end{enumerate}
+
+  \begin{alertblock}{Manejo de Concurrencia}
+  Por cada cliente aceptado, el servidor dispara un \textbf{hilo dedicado} (\texttt{pthread\_create}) en modo \textit{detached}, permitiendo que el hilo principal siga escuchando nuevas peticiones sin bloqueo.
+  \end{alertblock}
+\end{frame}
+
+% Sección 3: Comunicación
+\section{Protocolo de Comunicación}
+
+\begin{frame}{Intercambio de Mensajes}
+  La comunicación se realiza mediante un protocolo de texto plano sobre TCP, diseñado para ser ligero y legible.
+  
+  \begin{columns}
+    \column{0.5\textwidth}
+    \textbf{Estructura del Paquete:}
+    \begin{itemize}
+        \item Buffer de Recepción: 64 KB
+        \item Parsing: Tokenización por espacios
+        \item Comandos: Verbo + Argumentos
+    \end{itemize}
+    
+    \column{0.5\textwidth}
+    \textbf{Comandos Soportados:}
+    \begin{itemize}
+        \item \texttt{LIST}: Consulta de tabla de procesos.
+        \item \texttt{START <cmd>}: Ejecución remota.
+        \item \texttt{STOP <pid>}: Terminación forzada.
+        \item \texttt{EXIT}: Cierre de sesión.
+    \end{itemize}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Gestión de Buffers y Latencia}
+  \begin{itemize}
+      \item \textbf{Buffering Extendido:} Se implementaron buffers de \textbf{65,536 bytes} para manejar salidas extensas de comandos del sistema (ej. listados de miles de procesos) sin fragmentación a nivel de aplicación.
+      \item \textbf{Persistencia:} La conexión se mantiene viva (Keep-Alive implícito) permitiendo múltiples transacciones por sesión, reduciendo el overhead del handshake TCP.
+  \end{itemize}
+\end{frame}
+
+% Sección 4: Backend
+\section{Gestión de Procesos (Backend)}
+
+\begin{frame}{Ejecución y Control de Procesos}
+  El servidor interactúa directamente con el Kernel de Linux para gestionar tareas.
+  
+  \begin{block}{Comando START (Fork/Exec)}
+  Utiliza la primitiva \texttt{fork()} para clonar el proceso servidor y \texttt{execvp()} para reemplazar la imagen de memoria con el nuevo comando.
+  \begin{itemize}
+      \item \textit{Seguridad:} Redirección de \texttt{stdout/stderr} a \texttt{/dev/null} para evitar corrupción del socket.
+  \end{itemize}
+  \end{block}
+
+  \begin{block}{Comando LIST (Pipes)}
+  Abre un pipe de lectura (\texttt{popen}) ejecutando \texttt{ps -e -o pid,comm}, capturando la salida estándar del sistema en tiempo real.
+  \end{block}
+\end{frame}
+
+\begin{frame}{Manejo de Señales y Limpieza}
+  Para mantener la estabilidad del servidor durante ejecuciones prolongadas:
+  
+  \begin{itemize}
+      \item \textbf{Prevención de Zombies:} Se implementó un manejador de señales (\texttt{sigaction}) para \texttt{SIGCHLD}.
+      \item \textbf{Reap:} El servidor limpia automáticamente los recursos de los procesos hijos terminados usando \texttt{waitpid} con la bandera \texttt{WNOHANG}.
+  \end{itemize}
+\end{frame}
+
+% Sección 5: Despliegue
+\section{Despliegue y Uso}
+
+\begin{frame}{Compilación y Ejecución}
+  \begin{block}{Compilación (Makefile)}
+  El proyecto incluye Makefiles optimizados para separar la lógica de cliente y servidor.
+  \texttt{make -f Makefile.server} / \texttt{make -f Makefile.client}
+  \end{block}
+
+  \begin{block}{Ejecución}
+  \begin{itemize}
+      \item \textbf{Servidor:} \texttt{./server\_bin} (Expone puerto 5002)
+      \item \textbf{Cliente:} \texttt{./client\_bin} (Requiere IP del servidor)
+  \end{itemize}
+  \end{block}
+  
+  \vspace{0.5cm}
+  \centering
+  \small{Repositorio: \url{https://github.com/riosisraelg/avanceProyecto}}
+\end{frame}
+
+\begin{frame}
+\centering
+\Huge{Preguntas}
+\end{frame}
+
+\end{document}
