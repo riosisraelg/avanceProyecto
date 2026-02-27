@@ -1,10 +1,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <time.h>
+#include <ctype.h>
 
 #include "tui.h"
 #include "colors.h"
 #include "curses_compat.h"
+
+#define LIST_INTERVAL    10 /* segundos entre refrescos automáticos de LIST */
+#define CMD_REFRESH_DELAY 5  /* segundos tras START/STOP para refrescar lista */
 
 TUIState *tui_init(void) {
     TUIState *state = calloc(1, sizeof(TUIState));
@@ -311,23 +316,304 @@ static void render_status_bar(TUIState *state)
             waddch(sp->win, ' ');
     }
 
-    /* Mostrar mensaje de estado */
+    /* Mostrar mensaje de estado a la izquierda */
     wattron(sp->win, COLOR_PAIR(COLOR_PAIR_HEADER));
-    mvwprintw(sp->win, 1, 1, "%.*s", inner_w, state->status_msg);
+    mvwprintw(sp->win, 1, 1, "%-*.*s", inner_w, inner_w, state->status_msg);
     wattroff(sp->win, COLOR_PAIR(COLOR_PAIR_HEADER));
 
+    /* Hint de ayuda a la derecha */
+    {
+        const char *hint = " F1:Ayuda  F2:Nuevo proceso ";
+        int hint_len = (int)strlen(hint);
+        int hint_x = inner_w - hint_len + 1;
+        if (hint_x > 1) {
+            wattron(sp->win, COLOR_PAIR(COLOR_PAIR_SELECTED));
+            mvwprintw(sp->win, 1, hint_x, "%s", hint);
+            wattroff(sp->win, COLOR_PAIR(COLOR_PAIR_SELECTED));
+        }
+    }
+
     wrefresh(sp->win);
+}
+
+/*
+ * Muestra un diálogo modal con la referencia de comandos disponibles.
+ * Se cierra con cualquier tecla.
+ */
+static void show_help_dialog(TUIState *state)
+{
+    /* Contenido de la ayuda */
+    static const char *help_lines[] = {
+        " COMANDOS DISPONIBLES ",
+        "",
+        "  START <nombre>",
+        "    Reanuda un proceso suspendido por su nombre.",
+        "    Envia SIGCONT a todos los procesos que coincidan.",
+        "    Ejemplo:  START nginx",
+        "",
+        "  END <PID>",
+        "    Termina un proceso en ejecucion.",
+        "    Envia SIGTERM al proceso con el PID indicado.",
+        "    Ejemplo:  END 5678",
+        "",
+        "  EXIT",
+        "    Desconecta del servidor y cierra el cliente.",
+        "    No requiere argumentos.",
+        "",
+        "  (Presiona cualquier tecla para cerrar)",
+        NULL
+    };
+
+    int num_lines = 0;
+    while (help_lines[num_lines]) num_lines++;
+
+    int dh = num_lines + 2;   /* +2 para borde superior e inferior */
+    int dw = 52;
+    int starty = (LINES - dh) / 2;
+    int startx = (COLS  - dw) / 2;
+
+    if (starty < 0) starty = 0;
+    if (startx < 0) startx = 0;
+    if (dh > LINES) dh = LINES;
+    if (dw > COLS)  dw = COLS;
+
+    WINDOW *hw = newwin(dh, dw, starty, startx);
+    if (!hw) return;
+
+    keypad(hw, TRUE);
+    nodelay(hw, FALSE); /* bloqueante hasta que el usuario pulse una tecla */
+
+    /* Borde */
+    wattron(hw, COLOR_PAIR(COLOR_PAIR_BORDER));
+    box(hw, 0, 0);
+    wattroff(hw, COLOR_PAIR(COLOR_PAIR_BORDER));
+
+    /* Líneas de contenido */
+    for (int i = 0; i < num_lines; i++) {
+        const char *ln = help_lines[i];
+        if (i == 0) {
+            /* Título resaltado */
+            int tx = (dw - (int)strlen(ln)) / 2;
+            if (tx < 1) tx = 1;
+            wattron(hw, COLOR_PAIR(COLOR_PAIR_HEADER) | A_BOLD);
+            mvwprintw(hw, i + 1, tx, "%s", ln);
+            wattroff(hw, COLOR_PAIR(COLOR_PAIR_HEADER) | A_BOLD);
+        } else if (ln[0] != '\0' && ln[2] != ' ') {
+            /* Nombres de comando en negrita */
+            wattron(hw, COLOR_PAIR(COLOR_PAIR_SELECTED) | A_BOLD);
+            mvwprintw(hw, i + 1, 1, "%-*.*s", dw - 2, dw - 2, ln);
+            wattroff(hw, COLOR_PAIR(COLOR_PAIR_SELECTED) | A_BOLD);
+        } else {
+            wattron(hw, COLOR_PAIR(COLOR_PAIR_TEXT));
+            mvwprintw(hw, i + 1, 1, "%-*.*s", dw - 2, dw - 2, ln);
+            wattroff(hw, COLOR_PAIR(COLOR_PAIR_TEXT));
+        }
+    }
+
+    wrefresh(hw);
+    wgetch(hw);   /* esperar tecla */
+    delwin(hw);
+
+    /* Redibujar la TUI tras cerrar el diálogo */
+    touchwin(stdscr);
+    refresh();
+    panels_draw_borders(state->layout);
+    (void)state; /* silenciar advertencia si no se usa más */
+}
+
+/*
+ * Diálogo modal para lanzar un proceso nuevo en el servidor.
+ * Envía "START <comando>" al servidor vía fork+execvp.
+ * Retorna el comando ingresado (sin el prefijo START) o cadena vacía si canceló.
+ */
+static void show_run_dialog(TUIState *state, time_t *deferred_list_at)
+{
+    int dw = 56;
+    int dh = 10;
+    int starty = (LINES - dh) / 2;
+    int startx = (COLS  - dw) / 2;
+
+    if (starty < 0) starty = 0;
+    if (startx < 0) startx = 0;
+    if (dh > LINES) dh = LINES;
+    if (dw > COLS)  dw = COLS;
+
+    WINDOW *rwin = newwin(dh, dw, starty, startx);
+    if (!rwin) return;
+
+    keypad(rwin, TRUE);
+    nodelay(rwin, FALSE);
+
+    char cmd_buf[INPUT_BUF_SIZE];
+    memset(cmd_buf, 0, sizeof(cmd_buf));
+    int cmd_len = 0;
+    char result_msg[80] = "";
+
+    for (;;) {
+        werase(rwin);
+        wattron(rwin, COLOR_PAIR(COLOR_PAIR_BORDER));
+        box(rwin, 0, 0);
+        wattroff(rwin, COLOR_PAIR(COLOR_PAIR_BORDER));
+
+        /* Título */
+        const char *title = " Lanzar Proceso Nuevo ";
+        int tx = (dw - (int)strlen(title)) / 2;
+        if (tx < 1) tx = 1;
+        wattron(rwin, COLOR_PAIR(COLOR_PAIR_HEADER) | A_BOLD);
+        mvwprintw(rwin, 0, tx, "%s", title);
+        wattroff(rwin, COLOR_PAIR(COLOR_PAIR_HEADER) | A_BOLD);
+
+        /* Descripción */
+        wattron(rwin, COLOR_PAIR(COLOR_PAIR_TEXT));
+        mvwprintw(rwin, 2, 2, "Comando a ejecutar en el servidor:");
+        mvwprintw(rwin, 3, 2, "Ej: sleep 30   firefox   python3 script.py");
+        wattroff(rwin, COLOR_PAIR(COLOR_PAIR_TEXT));
+
+        /* Campo de entrada */
+        wattron(rwin, COLOR_PAIR(COLOR_PAIR_SELECTED));
+        mvwprintw(rwin, 5, 2, " %-*.*s", dw - 5, dw - 5, cmd_buf);
+        wattroff(rwin, COLOR_PAIR(COLOR_PAIR_SELECTED));
+
+        /* Mensaje resultado */
+        if (result_msg[0] != '\0') {
+            wattron(rwin, COLOR_PAIR(COLOR_PAIR_ERROR) | A_BOLD);
+            mvwprintw(rwin, 7, 2, "%-*.*s", dw - 4, dw - 4, result_msg);
+            wattroff(rwin, COLOR_PAIR(COLOR_PAIR_ERROR) | A_BOLD);
+        }
+
+        /* Instrucciones */
+        wattron(rwin, COLOR_PAIR(COLOR_PAIR_TEXT));
+        mvwprintw(rwin, dh - 2, 2, "Enter: ejecutar   ESC: cancelar");
+        wattroff(rwin, COLOR_PAIR(COLOR_PAIR_TEXT));
+
+        /* Cursor en el campo */
+        wmove(rwin, 5, 3 + cmd_len);
+        wrefresh(rwin);
+
+        int ch = wgetch(rwin);
+
+        if (ch == 27) {  /* ESC - cancelar */
+            break;
+        }
+
+        if (ch == '\n' || ch == '\r' || ch == KEY_ENTER) {
+            if (cmd_len == 0) {
+                strncpy(result_msg, "El comando no puede estar vacio.", sizeof(result_msg) - 1);
+                continue;
+            }
+            /* Enviar START <comando> al servidor */
+            char send_buf[INPUT_BUF_SIZE + 8];
+            snprintf(send_buf, sizeof(send_buf), "START %s\n", cmd_buf);
+            net_send(state->sock, send_buf);
+
+            /* Leer respuesta del servidor */
+            char recv_buf[NET_BUFFER_SIZE];
+            fd_set rfds;
+            struct timeval tv;
+            FD_ZERO(&rfds);
+            FD_SET(state->sock, &rfds);
+            tv.tv_sec = 3; tv.tv_usec = 0;
+            int ready = select((int)state->sock + 1, &rfds, NULL, NULL, &tv);
+            if (ready > 0) {
+                int nr = recv(state->sock, recv_buf, NET_BUFFER_SIZE - 1, 0);
+                if (nr > 0) {
+                    recv_buf[nr] = '\0';
+                    /* Mostrar respuesta del servidor brevemente */
+                    recv_buf[sizeof(result_msg) - 1] = '\0';
+                    strncpy(result_msg, recv_buf, sizeof(result_msg) - 1);
+                    /* Eliminar newline del mensaje */
+                    char *nl = strchr(result_msg, '\n');
+                    if (nl) *nl = '\0';
+                }
+            }
+
+            /* Programar refresco de lista */
+            if (deferred_list_at)
+                *deferred_list_at = time(NULL) + CMD_REFRESH_DELAY;
+
+            /* Actualizar barra de estado */
+            snprintf(state->status_msg, sizeof(state->status_msg),
+                     "Proceso iniciado: %.220s", cmd_buf);
+
+            /* Mostrar resultado 1.5 seg y cerrar */
+            wattron(rwin, COLOR_PAIR(COLOR_PAIR_HEADER) | A_BOLD);
+            mvwprintw(rwin, 7, 2, "%-*.*s", dw - 4, dw - 4, result_msg);
+            wattroff(rwin, COLOR_PAIR(COLOR_PAIR_HEADER) | A_BOLD);
+            wrefresh(rwin);
+            napms(1500);
+            break;
+        }
+
+        if (ch == KEY_BACKSPACE || ch == 127 || ch == '\b') {
+            if (cmd_len > 0) {
+                cmd_buf[--cmd_len] = '\0';
+                result_msg[0] = '\0';
+            }
+            continue;
+        }
+
+        if (isprint(ch) && cmd_len < (int)sizeof(cmd_buf) - 1) {
+            cmd_buf[cmd_len++] = (char)ch;
+            cmd_buf[cmd_len]   = '\0';
+            result_msg[0] = '\0';
+        }
+    }
+
+    delwin(rwin);
+    touchwin(stdscr);
+    refresh();
+    panels_draw_borders(state->layout);
 }
 
 /*
  * Envía un comando al servidor, recibe la respuesta y actualiza el estado.
  * Retorna 1 si el comando fue EXIT (señal de salir), 0 en otro caso.
  */
-static int handle_command(TUIState *state, const char *cmd)
+static int handle_command(TUIState *state, const char *cmd, time_t *deferred_list_at)
 {
     char send_buf[INPUT_BUF_SIZE + 2];
     char recv_buf[NET_BUFFER_SIZE];
     int n;
+
+    /* Verificar si es HELP */
+    if (strcmp(cmd, "HELP") == 0) {
+        show_help_dialog(state);
+        return 0;
+    }
+
+    /* RUN <cmd> es alias de START <cmd> para lanzar proceso nuevo */
+    if (strncmp(cmd, "RUN ", 4) == 0) {
+        char aliased[INPUT_BUF_SIZE + 2];
+        snprintf(aliased, sizeof(aliased), "START %s", cmd + 4);
+        /* Reenviar como START */
+        char send_buf2[INPUT_BUF_SIZE + 4];
+        snprintf(send_buf2, sizeof(send_buf2), "%s\n", aliased);
+        snprintf(state->status_msg, sizeof(state->status_msg), "Iniciando: %s", cmd + 4);
+        render_status_bar(state);
+        net_send(state->sock, send_buf2);
+        /* Leer respuesta */
+        {
+            fd_set rfds; struct timeval tv;
+            char recv_buf2[NET_BUFFER_SIZE];
+            FD_ZERO(&rfds); FD_SET(state->sock, &rfds);
+            tv.tv_sec = 3; tv.tv_usec = 0;
+            int ready = select((int)state->sock + 1, &rfds, NULL, NULL, &tv);
+            if (ready > 0) {
+                int nr = recv(state->sock, recv_buf2, NET_BUFFER_SIZE - 1, 0);
+                if (nr > 0) {
+                    recv_buf2[nr] = '\0';
+                    /* Mostrar respuesta en status */
+                    char *nl = strchr(recv_buf2, '\n');
+                    if (nl) *nl = '\0';
+                    snprintf(state->status_msg, sizeof(state->status_msg), "%.*s",
+                             (int)sizeof(state->status_msg) - 1, recv_buf2);
+                }
+            }
+        }
+        if (deferred_list_at)
+            *deferred_list_at = time(NULL) + CMD_REFRESH_DELAY;
+        return 0;
+    }
 
     /* Verificar si es EXIT */
     if (strcmp(cmd, "EXIT") == 0) {
@@ -394,6 +680,12 @@ static int handle_command(TUIState *state, const char *cmd)
         }
     }
 
+    /* Si fue START o END, programar refresco diferido de la lista */
+    if (strncmp(cmd, "START ", 6) == 0 || strncmp(cmd, "STOP ", 5) == 0) {
+        if (deferred_list_at)
+            *deferred_list_at = time(NULL) + CMD_REFRESH_DELAY;
+    }
+
     /* Restaurar mensaje de estado normal */
     snprintf(state->status_msg, sizeof(state->status_msg),
              "Conectado a %s:%d", state->server_ip, state->server_port);
@@ -406,6 +698,8 @@ void tui_run(TUIState *state)
     char prompt[128];
     int ch;
     int visible_h;
+    time_t last_list_time;
+    time_t deferred_list_at; /* si >0, enviar LIST cuando time()>=deferred_list_at */
 
     if (!state || !state->layout)
         return;
@@ -416,6 +710,13 @@ void tui_run(TUIState *state)
 
     /* Asegurar modo no bloqueante en stdscr */
     nodelay(stdscr, TRUE);
+
+    /* Cursor visible y parpadeante en el panel de entrada */
+    curs_set(1);
+
+    /* Inicializar timers */
+    last_list_time   = time(NULL);
+    deferred_list_at = 0;
 
     while (state->running) {
         /* --- Dibujar bordes y títulos --- */
@@ -432,14 +733,51 @@ void tui_run(TUIState *state)
         render_status_bar(state);
 
         /* --- Indicador de foco --- */
-        if (state->layout->focused == 0 && state->layout->proc.win) {
-            wattron(state->layout->proc.win, COLOR_PAIR(COLOR_PAIR_SELECTED));
-            mvwprintw(state->layout->proc.win, 0, 1, "[*]");
-            wattroff(state->layout->proc.win, COLOR_PAIR(COLOR_PAIR_SELECTED));
+        if (state->layout->proc.win) {
+            if (state->layout->focused == 0) {
+                /* Foco en Panel_Procesos */
+                wattron(state->layout->proc.win, COLOR_PAIR(COLOR_PAIR_SELECTED));
+                mvwprintw(state->layout->proc.win, 0, 1, "[*]");
+                wattroff(state->layout->proc.win, COLOR_PAIR(COLOR_PAIR_SELECTED));
+            } else {
+                /* Sin foco: limpiar indicador del panel procesos */
+                wattron(state->layout->proc.win, COLOR_PAIR(COLOR_PAIR_BORDER));
+                mvwprintw(state->layout->proc.win, 0, 1, "   ");
+                wattroff(state->layout->proc.win, COLOR_PAIR(COLOR_PAIR_BORDER));
+            }
             wrefresh(state->layout->proc.win);
+        }
+        if (state->layout->input.win) {
+            if (state->layout->focused == 1) {
+                /* Foco en Panel_Entrada */
+                wattron(state->layout->input.win, COLOR_PAIR(COLOR_PAIR_SELECTED));
+                mvwprintw(state->layout->input.win, 0, 1, "[*]");
+                wattroff(state->layout->input.win, COLOR_PAIR(COLOR_PAIR_SELECTED));
+            } else {
+                /* Sin foco en entrada: limpiar indicador pero el cursor sigue aquí */
+                wattron(state->layout->input.win, COLOR_PAIR(COLOR_PAIR_BORDER));
+                mvwprintw(state->layout->input.win, 0, 1, "   ");
+                wattroff(state->layout->input.win, COLOR_PAIR(COLOR_PAIR_BORDER));
+            }
+            wrefresh(state->layout->input.win);
         }
 
         doupdate();
+
+        /* --- Posicionar cursor físico en Panel_Entrada (siempre parpadea ahí) --- */
+        {
+            char prompt_tmp[128];
+            int prompt_len;
+            input_format_prompt(prompt_tmp, sizeof(prompt_tmp),
+                                state->server_ip, state->server_port);
+            prompt_len = (int)strlen(prompt_tmp);
+            if (state->layout->input.win) {
+                wmove(state->layout->input.win,
+                      1,
+                      1 + prompt_len + state->input_line.cursor_pos);
+                wrefresh(state->layout->input.win);
+            }
+        }
 
         /* --- Leer tecla (no bloqueante) --- */
         ch = wgetch(stdscr);
@@ -479,6 +817,24 @@ void tui_run(TUIState *state)
 
             /* Pequeña pausa para no saturar la CPU */
             napms(30);
+
+            /* Refresco diferido tras START/END */
+            if (deferred_list_at > 0 && state->sock != INVALID_SOCKET) {
+                if (time(NULL) >= deferred_list_at) {
+                    deferred_list_at = 0;
+                    last_list_time   = time(NULL);
+                    net_send(state->sock, "LIST\n");
+                }
+            }
+
+            /* Refresco periódico automático de la lista de procesos */
+            if (state->sock != INVALID_SOCKET) {
+                time_t now = time(NULL);
+                if (now - last_list_time >= LIST_INTERVAL) {
+                    last_list_time = now;
+                    net_send(state->sock, "LIST\n");
+                }
+            }
             continue;
         }
 
@@ -520,16 +876,30 @@ void tui_run(TUIState *state)
             }
         }
 
+        /* --- F1: mostrar ayuda de comandos --- */
+        if (ch == KEY_F(1)) {
+            show_help_dialog(state);
+            continue;
+        }
+
+        /* --- F2: lanzar proceso nuevo --- */
+        if (ch == KEY_F(2)) {
+            show_run_dialog(state, &deferred_list_at);
+            continue;
+        }
+
+        /* --- RUN <cmd>: alias para lanzar proceso desde la línea de entrada --- */
+
         /* --- Delegar a input_handle_key --- */
         if (input_handle_key(&state->input_line, ch)) {
             /* Enter presionado con comando listo */
-            if (handle_command(state, state->input_line.buffer)) {
+            if (handle_command(state, state->input_line.buffer, &deferred_list_at)) {
                 /* EXIT — salir del bucle */
                 state->running = 0;
             }
             input_clear(&state->input_line);
+            /* Reiniciar timer periódico para no duplicar el refresco */
+            last_list_time = time(NULL);
         }
     }
 }
-
-
