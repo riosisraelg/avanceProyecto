@@ -1,0 +1,708 @@
+\documentclass[12pt,a4paper]{report}
+
+% ─── Paquetes ───────────────────────────────────────────────────────────────
+\usepackage[spanish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{tcolorbox}
+\usepackage{mdframed}
+\usepackage{parskip}
+\usepackage{microtype}
+
+% ─── Márgenes ────────────────────────────────────────────────────────────────
+\geometry{
+  top=2.5cm,
+  bottom=2.5cm,
+  left=3cm,
+  right=2.5cm,
+  headheight=15pt
+}
+
+% ─── Colores ─────────────────────────────────────────────────────────────────
+\definecolor{azulTitulo}{RGB}{30, 90, 160}
+\definecolor{grisClaro}{RGB}{245, 245, 245}
+\definecolor{grisOscuro}{RGB}{50, 50, 50}
+\definecolor{verdeCodigo}{RGB}{0, 120, 50}
+\definecolor{rojoClave}{RGB}{160, 0, 0}
+\definecolor{azulComentario}{RGB}{60, 100, 180}
+
+% ─── Estilo de código ────────────────────────────────────────────────────────
+\lstdefinestyle{cstyle}{
+  language=C,
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\color{rojoClave}\bfseries,
+  commentstyle=\color{azulComentario}\itshape,
+  stringstyle=\color{verdeCodigo},
+  numberstyle=\tiny\color{gray},
+  numbers=left,
+  stepnumber=1,
+  breaklines=true,
+  breakatwhitespace=true,
+  frame=single,
+  rulecolor=\color{gray!40},
+  backgroundcolor=\color{grisClaro},
+  tabsize=4,
+  showspaces=false,
+  showstringspaces=false,
+  captionpos=b,
+}
+
+\lstdefinestyle{bashstyle}{
+  language=bash,
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\color{azulTitulo}\bfseries,
+  commentstyle=\color{gray}\itshape,
+  stringstyle=\color{verdeCodigo},
+  backgroundcolor=\color{black!90},
+  basicstyle=\ttfamily\footnotesize\color{white},
+  frame=single,
+  rulecolor=\color{black},
+  breaklines=true,
+  captionpos=b,
+}
+
+\lstset{style=cstyle}
+
+% ─── Encabezado y pie de página ──────────────────────────────────────────────
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textcolor{azulTitulo}{\textbf{Remote Process Manager}}}
+\fancyhead[R]{\small\textit{Proyecto – Sistemas Operativos}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ─── Títulos de sección ──────────────────────────────────────────────────────
+\titleformat{\chapter}[block]
+  {\normalfont\Large\bfseries\color{azulTitulo}}
+  {\thechapter.}{1em}{}[\vspace{2pt}\hrule]
+
+\titleformat{\section}
+  {\normalfont\large\bfseries\color{azulTitulo}}
+  {\thesection}{1em}{}
+
+\titleformat{\subsection}
+  {\normalfont\normalsize\bfseries\color{grisOscuro}}
+  {\thesubsection}{1em}{}
+
+% ─── Hipervínculos ───────────────────────────────────────────────────────────
+\hypersetup{
+  colorlinks=true,
+  linkcolor=azulTitulo,
+  urlcolor=azulTitulo,
+  citecolor=azulTitulo,
+  pdftitle={Remote Process Manager - Reporte de Proyecto},
+  pdfauthor={Fernando Israel Rios Garzia  Angel Cuevas Lopez  Artur Mikhail Lazurenko Mannanov},
+}
+
+% ═══════════════════════════════════════════════════════════════════════════════
+\begin{document}
+
+% ─── Portada ─────────────────────────────────────────────────────────────────
+\begin{titlepage}
+  \centering
+  \vspace*{2cm}
+
+  {\Huge\bfseries\color{azulTitulo} Remote Process Manager}\\[0.5cm]
+  {\Large\color{grisOscuro} Sistema de Administración de Procesos Distribuido}\\[2cm]
+
+  \rule{\textwidth}{1.5pt}\\[0.4cm]
+  {\large Reporte Técnico de Proyecto}\\[0.2cm]
+  \rule{\textwidth}{1.5pt}\\[2cm]
+
+  \begin{tabular}{rl}
+    \textbf Fernando Israel Rios Garzia \\ Angel Cuevas Lopez \\ Artur Mikhail Lazurenko Mannanov \\[0.3cm]
+    \textbf \texttt{Sistemas Operativos} \\[0.3cm]
+    \textbf Ana Cruz \\[0.3cm]
+    \textbf \today \\
+  \end{tabular}
+
+  \vfill
+  {\small\textit{Proyecto desarrollado para la asignatura de Sistemas Operativos}}
+\end{titlepage}
+
+% ─── Tabla de contenido ──────────────────────────────────────────────────────
+\tableofcontents
+\newpage
+
+% ═══════════════════════════════════════════════════════════════════════════════
+\chapter{Introducción}
+
+\section{Descripción General}
+
+El \textbf{Remote Process Manager} es un sistema de administración de procesos distribuido desarrollado íntegramente en lenguaje C, utilizando las APIs POSIX del sistema operativo. El proyecto permite a un cliente remoto conectarse a un servidor (alojado en una instancia \textbf{AWS EC2}) para realizar operaciones fundamentales de gestión de procesos: listar los procesos activos, iniciar nuevos procesos y detener procesos en ejecución.
+
+La arquitectura cliente-servidor está construida sobre comunicación \textbf{TCP directa}, lo que garantiza conexiones confiables y de baja latencia a través de redes públicas e incluso a través de firewalls configurados mediante AWS Security Groups.
+
+\section{Motivación y Contexto}
+
+La gestión remota de procesos es una necesidad fundamental en entornos de cómputo distribuido, administración de servidores en la nube y despliegue de aplicaciones. Este proyecto aborda esa necesidad de manera didáctica pero funcional, implementando desde cero —sin dependencias externas más allá de la biblioteca estándar de C y las APIs POSIX— un sistema capaz de:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item Transmitir listas completas de procesos del sistema operativo a través de la red.
+  \item Iniciar y detener procesos reales utilizando llamadas al sistema \texttt{fork()} y \texttt{exec()}.
+  \item Atender múltiples clientes de forma concurrente mediante hilos POSIX (\textit{pthreads}).
+\end{itemize}
+
+\section{Alcance del Proyecto}
+
+El proyecto comprende:
+
+\begin{enumerate}[leftmargin=1.5em]
+  \item Un servidor TCP multihilo escrito en C.
+  \item Un cliente de línea de comandos interactivo.
+  \item Makefiles separados para compilación de cliente y servidor.
+  \item Scripts de despliegue en AWS EC2.
+  \item Configuración de servicio \texttt{systemd} para ejecución como demonio.
+  \item Pruebas de funcionalidad básica.
+\end{enumerate}
+
+% ═══════════════════════════════════════════════════════════════════════════════
+\chapter{Arquitectura del Sistema}
+
+\section{Visión General}
+
+El sistema sigue una arquitectura \textbf{cliente-servidor clásica} sobre TCP/IP, con las siguientes capas:
+
+\begin{figure}[H]
+  \centering
+  \begin{tcolorbox}[colback=grisClaro, colframe=azulTitulo, width=0.85\textwidth,
+                    title=\textbf{Diagrama de Arquitectura}]
+    \centering
+    \ttfamily\small
+    \begin{tabular}{ccc}
+      \textbf{[Cliente Local]} & $\xrightarrow{\text{TCP puerto 5002}}$ & \textbf{[Servidor AWS EC2]} \\
+      \texttt{client\_bin}     &                                         & \texttt{server\_bin}        \\
+      macOS / Linux            &                                         & Ubuntu / Linux              \\
+    \end{tabular}\\[1em]
+    \normalfont\small
+    El servidor atiende cada conexión en un hilo POSIX independiente.
+  \end{tcolorbox}
+  \caption{Arquitectura general del sistema}
+\end{figure}
+
+\section{Componentes Principales}
+
+\subsection{Servidor (\texttt{server\_bin})}
+
+El servidor es el componente central del sistema. Sus responsabilidades son:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item Escuchar conexiones entrantes en el \textbf{puerto TCP 5002}.
+  \item Por cada cliente conectado, crear un hilo POSIX (\texttt{pthread}) para atenderlo de forma concurrente.
+  \item Procesar los comandos enviados por el cliente: \texttt{LIST}, \texttt{START}, \texttt{STOP}.
+  \item Para el comando \texttt{LIST}, ejecutar el comando del sistema y capturar su salida mediante pipes (\texttt{popen}).
+  \item Para el comando \texttt{START}, crear procesos hijo con \texttt{fork()}/\texttt{exec()}.
+  \item Para el comando \texttt{STOP}, enviar señales al proceso objetivo con \texttt{kill()}.
+\end{itemize}
+
+\subsection{Cliente (\texttt{client\_bin})}
+
+El cliente es una herramienta de línea de comandos interactiva que:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item Solicita al usuario la dirección IP del servidor al inicio.
+  \item Establece una conexión TCP persistente con el servidor.
+  \item Lee comandos del usuario y los envía al servidor.
+  \item Recibe y muestra la respuesta del servidor en pantalla.
+  \item Soporta el comando \texttt{EXIT} para terminar la sesión limpiamente.
+\end{itemize}
+
+\subsection{Estructura de Directorios}
+
+\begin{tcolorbox}[colback=grisClaro, colframe=gray!40]
+\begin{verbatim}
+avanceProyecto/
+|-- src/              # Código fuente (C)
+|-- doc/              # Documentación del proyecto
+|-- tests/            # Pruebas
+|-- Makefile.client   # Makefile para compilar el cliente
+|-- Makefile.server   # Makefile para compilar el servidor
+|-- ec2-control.sh    # Script de control de instancia EC2
+|-- proc-manager.service  # Unidad systemd
+|-- client_bin        # Binario del cliente (compilado)
+|-- src.zip           # Código fuente comprimido
+`-- README.md         # Documentación principal
+\end{verbatim}
+\end{tcolorbox}
+
+\section{Protocolo de Comunicación}
+
+La comunicación entre cliente y servidor se realiza mediante un protocolo de texto simple sobre TCP:
+
+\begin{longtable}{>{\ttfamily}p{4cm} p{4.5cm} p{5cm}}
+  \toprule
+  \textbf{Comando} & \textbf{Descripción} & \textbf{Respuesta del Servidor} \\
+  \midrule
+  \endhead
+  LIST & Lista todos los procesos activos & Salida de \texttt{ps aux} (hasta 64 KB) \\
+  START \textit{<cmd>} & Inicia un proceso & PID asignado o mensaje de error \\
+  STOP \textit{<pid>} & Detiene un proceso por PID & Confirmación o mensaje de error \\
+  EXIT & Termina la sesión & Cierre de conexión \\
+  \bottomrule
+  \caption{Protocolo de comandos del sistema}
+\end{longtable}
+
+\section{Capacidades del Buffer}
+
+Un aspecto técnico importante es el tamaño del buffer de transmisión: \textbf{64 KB (65,536 bytes)}. Esta decisión de diseño permite transmitir listas de procesos completas en sistemas con muchos procesos en ejecución, superando las limitaciones de buffers estándar de 4 KB o menos.
+
+% ═══════════════════════════════════════════════════════════════════════════════
+\chapter{Tecnologías y Herramientas}
+
+\section{Lenguaje de Programación: C}
+
+El proyecto está desarrollado al \textbf{99.3\%} en lenguaje C, con el restante 0.7\% en Shell. La elección de C se justifica por:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item \textbf{Acceso directo a APIs del sistema operativo}: Las llamadas POSIX como \texttt{fork()}, \texttt{exec()}, \texttt{kill()}, \texttt{socket()}, \texttt{pthread\_create()} están disponibles nativamente.
+  \item \textbf{Alto rendimiento}: Consumo mínimo de memoria y CPU sin overhead de máquinas virtuales ni intérpretes.
+  \item \textbf{Control total}: Manejo explícito de memoria, descriptores de archivo y señales.
+  \item \textbf{Portabilidad POSIX}: Compatible con cualquier sistema Linux/Unix.
+\end{itemize}
+
+\section{APIs POSIX Utilizadas}
+
+\subsection{Gestión de Procesos}
+
+\begin{tcolorbox}[colback=grisClaro, colframe=azulTitulo, title=\textbf{Llamadas al Sistema — Procesos}]
+\begin{lstlisting}[style=cstyle, numbers=none]
+pid_t fork(void);           // Crea un proceso hijo
+int execvp(const char *file, char *const argv[]);  // Ejecuta comando
+int kill(pid_t pid, int sig); // Envia señal a proceso
+pid_t waitpid(pid_t pid, int *status, int options); // Espera hijo
+FILE *popen(const char *command, const char *type); // Pipe a proceso
+\end{lstlisting}
+\end{tcolorbox}
+
+\subsection{Comunicación en Red (Sockets)}
+
+\begin{tcolorbox}[colback=grisClaro, colframe=azulTitulo, title=\textbf{Llamadas al Sistema — Sockets TCP}]
+\begin{lstlisting}[style=cstyle, numbers=none]
+int socket(int domain, int type, int protocol);
+int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+int listen(int sockfd, int backlog);
+int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
+int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+ssize_t send(int sockfd, const void *buf, size_t len, int flags);
+ssize_t recv(int sockfd, void *buf, size_t len, int flags);
+\end{lstlisting}
+\end{tcolorbox}
+
+\subsection{Multihilo con pthreads}
+
+\begin{tcolorbox}[colback=grisClaro, colframe=azulTitulo, title=\textbf{API de Hilos POSIX}]
+\begin{lstlisting}[style=cstyle, numbers=none]
+int pthread_create(pthread_t *thread, const pthread_attr_t *attr,
+                   void *(*start_routine)(void *), void *arg);
+int pthread_detach(pthread_t thread);
+int pthread_join(pthread_t thread, void **retval);
+\end{lstlisting}
+\end{tcolorbox}
+
+\section{Herramientas de Construcción}
+
+\subsection{GNU Make}
+
+El proyecto utiliza \textbf{Makefiles separados} para cliente y servidor, lo que permite compilarlos de forma independiente según el entorno de destino:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item \texttt{Makefile.server}: Compila el servidor, sus dependencias y genera los binarios auxiliares instalados en \texttt{/usr/local/bin}.
+  \item \texttt{Makefile.client}: Compila únicamente el cliente para uso local.
+\end{itemize}
+
+\subsection{GCC}
+
+El compilador utilizado es \textbf{GCC} (GNU Compiler Collection). Los flags típicos de compilación para este tipo de proyectos incluyen:
+
+\begin{lstlisting}[style=bashstyle, language=bash, numbers=none]
+gcc -o server_bin src/server.c -lpthread -Wall -Wextra -O2
+gcc -o client_bin src/client.c -Wall -Wextra -O2
+\end{lstlisting}
+
+\section{Plataforma de Despliegue: AWS EC2}
+
+\subsection{Configuración de la Instancia}
+
+El servidor está diseñado para ejecutarse en una instancia \textbf{AWS EC2} con Ubuntu. Los requisitos mínimos son:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item Sistema operativo: Ubuntu Server (20.04 LTS o superior).
+  \item \textbf{Security Group}: Puerto \textbf{TCP 5002} abierto para tráfico entrante.
+  \item GCC y Make instalados (\texttt{build-essential}).
+\end{itemize}
+
+\subsection{Script de Control EC2}
+
+El archivo \texttt{ec2-control.sh} automatiza operaciones sobre la instancia EC2 como iniciarla, detenerla o consultar su estado desde la línea de comandos local.
+
+% ═══════════════════════════════════════════════════════════════════════════════
+\chapter{Compilación e Instalación}
+
+\section{Requisitos Previos}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lll}
+    \toprule
+    \textbf{Herramienta} & \textbf{Versión mínima} & \textbf{Plataforma} \\
+    \midrule
+    GCC         & 9.0+ & Servidor (Linux) y Cliente \\
+    GNU Make    & 4.0+ & Ambas plataformas \\
+    Linux/POSIX & —    & Servidor (requerido) \\
+    macOS       & —    & Cliente (opcional) \\
+    \bottomrule
+  \end{tabular}
+  \caption{Dependencias del proyecto}
+\end{table}
+
+\section{Compilación del Servidor (AWS/Linux)}
+
+\begin{tcolorbox}[colback=black!85, colframe=black, title=\textcolor{white}{\textbf{Terminal — Servidor}}]
+\begin{lstlisting}[style=bashstyle, numbers=none]
+# Clonar el repositorio
+git clone https://github.com/riosisraelg/avanceProyecto.git
+cd avanceProyecto
+
+# Compilar e instalar (genera server_bin y symlinks en /usr/local/bin)
+make -f Makefile.server install
+\end{lstlisting}
+\end{tcolorbox}
+
+El objetivo \texttt{install} del \texttt{Makefile.server} realiza las siguientes acciones:
+\begin{enumerate}[leftmargin=1.5em]
+  \item Compila el código fuente del servidor y genera el ejecutable \texttt{server\_bin}.
+  \item Compila los juegos y scripts auxiliares en el directorio \texttt{bin/}.
+  \item Crea enlaces simbólicos (\textit{symlinks}) en \texttt{/usr/local/bin} para que los comandos sean accesibles globalmente.
+\end{enumerate}
+
+\section{Compilación del Cliente (Local)}
+
+\begin{tcolorbox}[colback=black!85, colframe=black, title=\textcolor{white}{\textbf{Terminal — Cliente}}]
+\begin{lstlisting}[style=bashstyle, numbers=none]
+# Compilar el cliente
+make -f Makefile.client
+
+# Ejecutar
+./client_bin
+\end{lstlisting}
+\end{tcolorbox}
+
+% ═══════════════════════════════════════════════════════════════════════════════
+\chapter{Configuración del Servicio Systemd}
+
+\section{¿Por qué Systemd?}
+
+Para un despliegue en producción en AWS EC2, es fundamental que el servidor de procesos se ejecute automáticamente al iniciar la instancia y que se reinicie ante posibles fallos. \textbf{Systemd} es el sistema de inicialización estándar en las distribuciones modernas de Linux (Ubuntu, Debian, CentOS, Fedora) y provee esta funcionalidad.
+
+\section{Archivo de Unidad}
+
+El proyecto incluye el archivo \texttt{proc-manager.service} con el siguiente contenido:
+
+\begin{lstlisting}[caption={Archivo proc-manager.service}, label={lst:systemd}]
+[Unit]
+Description=Remote Process Manager Server
+After=network.target
+
+[Service]
+WorkingDirectory=/root/avanceProyecto
+ExecStart=/root/avanceProyecto/server_bin
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target
+\end{lstlisting}
+
+\section{Instalación y Activación del Servicio}
+
+\begin{tcolorbox}[colback=black!85, colframe=black, title=\textcolor{white}{\textbf{Comandos Systemd}}]
+\begin{lstlisting}[style=bashstyle, numbers=none]
+# Copiar el archivo de servicio
+sudo cp proc-manager.service /etc/systemd/system/
+
+# Recargar la configuración de systemd
+sudo systemctl daemon-reload
+
+# Habilitar el servicio (inicio automático al arranque)
+sudo systemctl enable proc-manager
+
+# Iniciar el servicio
+sudo systemctl start proc-manager
+
+# Verificar el estado
+sudo systemctl status proc-manager
+\end{lstlisting}
+\end{tcolorbox}
+
+\section{Verificación del Estado}
+
+Un ejemplo de salida esperada del comando \texttt{status}:
+
+\begin{tcolorbox}[colback=grisClaro, colframe=verdeCodigo]
+\begin{verbatim}
+● proc-manager.service - Remote Process Manager Server
+     Loaded: loaded (/etc/systemd/system/proc-manager.service; enabled)
+     Active: active (running) since ...
+   Main PID: 1234 (server_bin)
+\end{verbatim}
+\end{tcolorbox}
+
+% ═══════════════════════════════════════════════════════════════════════════════
+\chapter{Uso del Sistema}
+
+\section{Iniciar el Cliente}
+
+\begin{tcolorbox}[colback=black!85, colframe=black, title=\textcolor{white}{\textbf{Terminal}}]
+\begin{lstlisting}[style=bashstyle, numbers=none]
+./client_bin
+# El programa solicita la IP del servidor:
+# Ingrese IP del servidor: 54.123.45.67
+\end{lstlisting}
+\end{tcolorbox}
+
+\section{Comandos Disponibles}
+
+Una vez conectado, el usuario dispone de los siguientes comandos:
+
+\subsection{LIST — Listar Procesos}
+
+\begin{tcolorbox}[colback=black!85, colframe=black]
+\begin{lstlisting}[style=bashstyle, numbers=none]
+> LIST
+USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+root         1  0.0  0.1 169760 10428 ?        Ss   10:00   0:01 /sbin/init
+root       234  0.0  0.0  14856  1940 ?        Ss   10:00   0:00 server_bin
+...
+\end{lstlisting}
+\end{tcolorbox}
+
+Retorna la lista completa de procesos del servidor (equivalente a \texttt{ps aux}), soportando hasta \textbf{64 KB} de datos de respuesta.
+
+\subsection{START — Iniciar un Proceso}
+
+\begin{tcolorbox}[colback=black!85, colframe=black]
+\begin{lstlisting}[style=bashstyle, numbers=none]
+> START sleep 100
+Proceso iniciado con PID: 1337
+
+> START v21
+Proceso iniciado con PID: 1338
+\end{lstlisting}
+\end{tcolorbox}
+
+Inicia cualquier comando del sistema en el servidor. El servidor ejecuta el proceso en segundo plano y retorna su PID.
+
+\subsection{STOP — Detener un Proceso}
+
+\begin{tcolorbox}[colback=black!85, colframe=black]
+\begin{lstlisting}[style=bashstyle, numbers=none]
+> STOP 1337
+Proceso 1337 detenido exitosamente.
+\end{lstlisting}
+\end{tcolorbox}
+
+Envía la señal \texttt{SIGKILL} (o \texttt{SIGTERM}) al proceso especificado por su PID.
+
+\subsection{EXIT — Terminar la Sesión}
+
+\begin{tcolorbox}[colback=black!85, colframe=black]
+\begin{lstlisting}[style=bashstyle, numbers=none]
+> EXIT
+Conexion cerrada.
+\end{lstlisting}
+\end{tcolorbox}
+
+Cierra la conexión TCP de forma limpia.
+
+% ═══════════════════════════════════════════════════════════════════════════════
+\chapter{Aspectos de Implementación}
+
+\section{Modelo de Concurrencia}
+
+El servidor implementa un modelo \textbf{thread-per-connection}: por cada cliente que se conecta, se crea un nuevo hilo POSIX con \texttt{pthread\_create()}. Este hilo maneja toda la comunicación con ese cliente de forma independiente, lo que permite:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item Atender múltiples clientes simultáneamente sin bloqueos.
+  \item Aislar los errores de un cliente del resto.
+  \item Aprovechar los múltiples núcleos del procesador.
+\end{itemize}
+
+El hilo se crea con el atributo \texttt{detached} para liberar sus recursos automáticamente al terminar, sin necesidad de llamar a \texttt{pthread\_join()}.
+
+\section{Manejo de Buffers}
+
+Un desafío clave en la implementación es la transmisión de la lista de procesos, ya que la salida de \texttt{ps aux} puede superar los tamaños de buffer estándar. El proyecto resuelve esto con:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item \textbf{Buffer de recepción extendido}: 64 KB (\texttt{char buffer[65536]}).
+  \item Lectura iterativa mediante \texttt{fgets()} sobre el pipe de \texttt{popen()}.
+  \item Envío fragmentado si la respuesta supera el tamaño máximo de un \texttt{send()}.
+\end{itemize}
+
+\section{Gestión de Procesos con fork/exec}
+
+Para el comando \texttt{START}, el servidor utiliza el patrón clásico \textbf{fork + exec}:
+
+\begin{lstlisting}[caption={Patrón fork/exec para iniciar procesos}, label={lst:forkexec}]
+pid_t pid = fork();
+if (pid == 0) {
+    // Proceso hijo: ejecutar el comando
+    execvp(argv[0], argv);
+    // Si llegamos aqui, execvp falló
+    exit(EXIT_FAILURE);
+} else if (pid > 0) {
+    // Proceso padre: enviar PID al cliente
+    snprintf(response, sizeof(response),
+             "Proceso iniciado con PID: %d\n", pid);
+    send(client_fd, response, strlen(response), 0);
+} else {
+    // Error en fork
+    send(client_fd, "Error al crear proceso\n", 23, 0);
+}
+\end{lstlisting}
+
+\section{Seguridad en Red}
+
+\subsection{Configuración del Security Group en AWS}
+
+Para que el servidor sea accesible desde el exterior, el \textbf{Security Group} de la instancia EC2 debe tener la siguiente regla de entrada:
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{llll}
+    \toprule
+    \textbf{Tipo} & \textbf{Protocolo} & \textbf{Puerto} & \textbf{Origen} \\
+    \midrule
+    TCP personalizado & TCP & 5002 & 0.0.0.0/0 (o IP específica) \\
+    SSH & TCP & 22 & IP del administrador \\
+    \bottomrule
+  \end{tabular}
+  \caption{Reglas del Security Group de AWS EC2}
+\end{table}
+
+\subsection{Consideraciones de Seguridad}
+
+
+
+% ═══════════════════════════════════════════════════════════════════════════════
+\chapter{Pruebas}
+
+\section{Estructura de Pruebas}
+
+El repositorio incluye un directorio \texttt{tests/} dedicado a pruebas de funcionalidad. Las pruebas cubren los casos de uso principales del sistema.
+
+\section{Casos de Prueba Principales}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{p{3.5cm} p{4cm} p{4.5cm}}
+    \toprule
+    \textbf{Caso de Prueba} & \textbf{Precondición} & \textbf{Resultado Esperado} \\
+    \midrule
+    Conexión al servidor & Servidor activo en IP:5002 & Cliente conectado correctamente \\
+    Comando LIST & Conexión establecida & Lista de procesos recibida \\
+    Comando START sleep & Conexión establecida & PID del proceso retornado \\
+    Comando STOP [PID] & Proceso activo con PID & Proceso terminado, confirmación \\
+    Múltiples clientes & Servidor activo & Ambos clientes atendidos simultáneamente \\
+    Desconexión abrupta & Cliente conectado & Servidor no se cuelga, hilo liberado \\
+    Buffer >4KB & Lista larga de procesos & Datos completos recibidos (hasta 64KB) \\
+    \bottomrule
+  \end{tabular}
+  \caption{Casos de prueba del sistema}
+\end{table}
+
+% ═══════════════════════════════════════════════════════════════════════════════
+\chapter{Conclusiones}
+
+\section{Conclusiones}
+
+El proyecto \textbf{Remote Process Manager} demuestra de manera práctica y funcional los conceptos fundamentales de la programación de sistemas en C:
+
+\begin{enumerate}[leftmargin=1.5em]
+  \item \textbf{Programación de red con sockets TCP}: La implementación de un servidor concurrente utilizando las APIs de Berkeley Sockets permite comprender los mecanismos de comunicación de bajo nivel que subyacen a tecnologías modernas como HTTP o gRPC.
+
+  \item \textbf{Concurrencia con pthreads}: El modelo thread-per-connection ilustra los fundamentos del multihilo en sistemas POSIX, incluyendo la creación, sincronización y liberación de recursos de hilos.
+
+  \item \textbf{Gestión de procesos}: El uso de \texttt{fork()}, \texttt{exec()}, \texttt{kill()} y \texttt{popen()} evidencia cómo el sistema operativo gestiona la creación y terminación de procesos a nivel de llamadas al sistema.
+
+  \item \textbf{Despliegue en la nube}: La integración con AWS EC2 y la configuración de systemd introduce conceptos de DevOps y operaciones en entornos de producción.
+\end{enumerate}
+
+
+% ═══════════════════════════════════════════════════════════════════════════════
+\chapter*{Referencias}
+\addcontentsline{toc}{chapter}{Referencias}
+
+\begin{enumerate}[leftmargin=1.5em]
+  \item Stevens, W. R., Fenner, B., \& Rudoff, A. M. (2003). \textit{UNIX Network Programming, Volume 1: The Sockets Networking API} (3rd ed.). Addison-Wesley.
+  \item Kerrisk, M. (2010). \textit{The Linux Programming Interface}. No Starch Press.
+  \item Stevens, W. R., \& Rago, S. A. (2013). \textit{Advanced Programming in the UNIX Environment} (3rd ed.). Addison-Wesley.
+  \item Repositorio del Proyecto: \url{https://github.com/riosisraelg/avanceProyecto}
+  \item Documentación oficial de \texttt{pthreads}: \url{https://man7.org/linux/man-pages/man7/pthreads.7.html}
+  \item Amazon Web Services. (2024). \textit{Amazon EC2 User Guide for Linux Instances}. \url{https://docs.aws.amazon.com/ec2/}
+  \item Freedesktop.org. (2024). \textit{systemd.service — Service unit configuration}. \url{https://www.freedesktop.org/software/systemd/man/systemd.service.html}
+\end{enumerate}
+
+% ─── Apéndice ────────────────────────────────────────────────────────────────
+\appendix
+
+\chapter{Comandos de Referencia Rápida}
+
+\begin{tcolorbox}[colback=grisClaro, colframe=azulTitulo,
+                  title=\textbf{Resumen de Comandos del Sistema}]
+\begin{lstlisting}[style=bashstyle, numbers=none]
+# ── COMPILACIÓN ──────────────────────────────────────
+make -f Makefile.server install   # Compilar e instalar servidor
+make -f Makefile.client           # Compilar cliente
+
+# ── SYSTEMD ──────────────────────────────────────────
+sudo systemctl daemon-reload      # Recargar configuración
+sudo systemctl enable proc-manager
+sudo systemctl start proc-manager
+sudo systemctl stop proc-manager
+sudo systemctl status proc-manager
+sudo journalctl -u proc-manager -f  # Ver logs en tiempo real
+
+# ── CLIENTE ──────────────────────────────────────────
+./client_bin                      # Iniciar cliente
+
+# ── COMANDOS DEL PROTOCOLO ───────────────────────────
+LIST                              # Listar procesos activos
+START <comando> [args]            # Iniciar proceso
+STOP <PID>                        # Detener proceso
+EXIT                              # Cerrar sesión
+\end{lstlisting}
+\end{tcolorbox}
+
+\chapter{Glosario}
+
+\begin{description}[leftmargin=3cm, labelwidth=2.8cm]
+  \item[\textbf{POSIX}] Portable Operating System Interface. Estándar IEEE que define las APIs del sistema operativo para compatibilidad entre sistemas Unix.
+  \item[\textbf{TCP}] Transmission Control Protocol. Protocolo de transporte orientado a conexión que garantiza la entrega ordenada de datos.
+  \item[\textbf{Socket}] Endpoint de comunicación bidireccional entre procesos en red.
+  \item[\textbf{fork()}] Llamada al sistema que crea un proceso hijo como copia del proceso padre.
+  \item[\textbf{exec()}] Familia de llamadas al sistema que reemplaza la imagen del proceso actual con un nuevo programa.
+  \item[\textbf{pthread}] POSIX Thread. Hilo de ejecución dentro de un proceso, gestionado mediante la biblioteca \texttt{libpthread}.
+  \item[\textbf{PID}] Process Identifier. Número entero único asignado por el sistema operativo a cada proceso en ejecución.
+  \item[\textbf{AWS EC2}] Amazon Elastic Compute Cloud. Servicio de cómputo en la nube de Amazon que provee instancias virtuales Linux/Windows.
+  \item[\textbf{Security Group}] Firewall virtual de AWS que controla el tráfico de red entrante y saliente de una instancia EC2.
+  \item[\textbf{Systemd}] Sistema de gestión de servicios y demonios para Linux. Reemplaza a SysVinit en distribuciones modernas.
+  \item[\textbf{Daemon/Demonio}] Proceso que corre en segundo plano sin terminal controlador, típicamente iniciado al arranque del sistema.
+\end{description}
+
+\end{document
