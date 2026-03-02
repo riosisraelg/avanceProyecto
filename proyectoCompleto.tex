@@ -1,0 +1,1618 @@
+\documentclass[12pt,a4paper]{report}
+
+% ─── Paquetes ───────────────────────────────────────────────────────────────
+\usepackage[spanish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{tcolorbox}
+\usepackage{mdframed}
+\usepackage{parskip}
+\usepackage{microtype}
+
+% ─── Márgenes ────────────────────────────────────────────────────────────────
+\geometry{
+  top=2.5cm,
+  bottom=2.5cm,
+  left=3cm,
+  right=2.5cm,
+  headheight=15pt
+}
+
+% ─── Colores ─────────────────────────────────────────────────────────────────
+\definecolor{azulTitulo}{RGB}{30, 90, 160}
+\definecolor{grisClaro}{RGB}{245, 245, 245}
+\definecolor{grisOscuro}{RGB}{50, 50, 50}
+\definecolor{verdeCodigo}{RGB}{0, 120, 50}
+\definecolor{rojoClave}{RGB}{160, 0, 0}
+\definecolor{azulComentario}{RGB}{60, 100, 180}
+
+% ─── Estilo de código ────────────────────────────────────────────────────────
+\lstdefinestyle{cstyle}{
+  language=C,
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\color{rojoClave}\bfseries,
+  commentstyle=\color{azulComentario}\itshape,
+  stringstyle=\color{verdeCodigo},
+  numberstyle=\tiny\color{gray},
+  numbers=left,
+  stepnumber=1,
+  breaklines=true,
+  breakatwhitespace=true,
+  frame=single,
+  rulecolor=\color{gray!40},
+  backgroundcolor=\color{grisClaro},
+  tabsize=4,
+  showspaces=false,
+  showstringspaces=false,
+  captionpos=b,
+}
+
+\lstdefinestyle{bashstyle}{
+  language=bash,
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\color{azulTitulo}\bfseries,
+  commentstyle=\color{gray}\itshape,
+  stringstyle=\color{verdeCodigo},
+  backgroundcolor=\color{black!90},
+  basicstyle=\ttfamily\footnotesize\color{white},
+  frame=single,
+  rulecolor=\color{black},
+  breaklines=true,
+  captionpos=b,
+}
+
+\lstset{
+  style=cstyle,
+  extendedchars=true,
+  literate={á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1 {ñ}{{\~n}}1 {Ó}{{\'O}}1 {──}{{\textemdash\textemdash}}2 {─}{{\textemdash}}1 {────────}{{\textemdash\textemdash\textemdash\textemdash\textemdash\textemdash\textemdash\textemdash}}8
+}
+
+% ─── Encabezado y pie de página ──────────────────────────────────────────────
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textcolor{azulTitulo}{\textbf{Remote Process Manager}}}
+\fancyhead[R]{\small\textit{Proyecto – Sistemas Operativos}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ─── Títulos de sección ──────────────────────────────────────────────────────
+\titleformat{\chapter}[block]
+  {\normalfont\Large\bfseries\color{azulTitulo}}
+  {\thechapter.}{1em}{}[\vspace{2pt}\hrule]
+
+\titleformat{\section}
+  {\normalfont\large\bfseries\color{azulTitulo}}
+  {\thesection}{1em}{}
+
+\titleformat{\subsection}
+  {\normalfont\normalsize\bfseries\color{grisOscuro}}
+  {\thesubsection}{1em}{}
+
+% ─── Hipervínculos ───────────────────────────────────────────────────────────
+\hypersetup{
+  colorlinks=true,
+  linkcolor=azulTitulo,
+  urlcolor=azulTitulo,
+  citecolor=azulTitulo,
+  pdftitle={Remote Process Manager - Reporte de Proyecto},
+  pdfauthor={Fernando Israel Rios Garzia  Angel Cuevas Lopez  Artur Mikhail Lazurenko Mannanov},
+}
+
+% ═══════════════════════════════════════════════════════════════════════════════
+
+\usepackage{csquotes}
+\usepackage{tikz}
+\usetikzlibrary{babel}
+\usepackage[style=apa, sortcites=true, sorting=nyt, backend=biber]{biblatex}
+
+\begin{filecontents}[overwrite]{referencias.bib}
+@online{instrucciones4,
+  author={{Universidad Tecmilenio}},
+  title={Actividad 4: Redes de Datos, Seguridad y Sistemas Distribuidos},
+  url={https://utm-cdn-labcontenidos-htfaarehf2gcfycs.a01.azurefd.net/contenido/profesional/lsti2308/entregables-v1/actividad-04.html?version=1},
+  urldate={2026-02-17}
+}
+@book{tanenbaum2011,
+  author={Tanenbaum, A. S. and Wetherall, D. J.},
+  title={Redes de computadoras},
+  year={2011},
+  publisher={Pearson Educación},
+  edition={5}
+}
+@book{stallings2014,
+  author={Stallings, W.},
+  title={Comunicaciones y Redes de Computadores},
+  year={2014},
+  publisher={Pearson},
+  edition={10}
+}
+\end{filecontents}
+\addbibresource{referencias.bib}
+\begin{document}
+
+
+% ─── Portada ─────────────────────────────────────────────────────────────────
+\begin{titlepage}
+  \centering
+  \vspace*{2cm}
+
+  {\Huge\bfseries\color{azulTitulo} Remote Process Manager}\\[0.5cm]
+  {\Large\color{grisOscuro} Sistema de Administración de Procesos Distribuido}\\[2cm]
+
+  \rule{\textwidth}{1.5pt}\\[0.4cm]
+  {\large Reporte Técnico de Proyecto}\\[0.2cm]
+  \rule{\textwidth}{1.5pt}\\[2cm]
+
+  \begin{tabular}{rl}
+    \textbf Fernando Israel Rios Garzia \\ Angel Cuevas Lopez \\ Artur Mikhail Lazurenko Mannanov \\[0.3cm]
+    \textbf \texttt{Sistemas Operativos} \\[0.3cm]
+    \textbf Ana Cruz \\[0.3cm]
+    \textbf \today \\
+  \end{tabular}
+
+  \vfill
+  {\small\textit{Proyecto desarrollado para la asignatura de Sistemas Operativos}}
+\end{titlepage}
+
+% ─── Tabla de contenido ──────────────────────────────────────────────────────
+\tableofcontents
+\newpage
+
+% ═══════════════════════════════════════════════════════════════════════════════
+
+
+\part{Actividad 4: Redes de Datos y Seguridad}
+
+\chapter{Introducción}
+El presente reporte detalla el desarrollo de la Actividad 4, que tiene como objetivo principal implementar, configurar y asegurar una red de datos básica, al igual que explorar los sistemas distribuidos mediante la compartición de recursos en un ecosistema virtual. A lo largo de la actividad, se desplegó un entorno compuesto por dos máquinas virtuales Linux conectadas entre sí para observar en la práctica los conceptos del modelo OSI, la configuración manual de direcciones IP estáticas y la habilitación de servicios de red indispensables (como SSH y HTTP). 
+
+Posterior a la integración de la red, se aplicaron medidas de seguridad informática estipuladas como estándar en la industria. Esto se logró mediante la configuración de firewalls de host restrictivos con UFW, el uso de criptografía de clave asimétrica para el acceso SSH remoto seguro, la implementación de cifrado HTTPS con certificados autofirmados y el análisis de vectores de posibles vulnerabilidades utilizando herramientas de auditoría perimetral como Nmap. Para terminar, se configuró un sistema de archivos remoto distribuido de red local (NFS) y se exploró de forma análoga el uso práctico de protocolos P2P como BitTorrent para compartir archivos. Integrar los conocimientos de redes, resiliencia y sistemas distribuidos ayuda a consolidar una visión holística sobre la arquitectura tecnológica de las operaciones informáticas actuales.
+
+\chapter{Desarrollo}
+
+\section{Parte 1. Diseño y configuración de una red de datos}
+
+\subsection{Implementación: Diseño de Red de Datos Básica}
+\textbf{Objetivo:} Crear una red básica donde dos máquinas virtuales Linux puedan comunicarse entre sí utilizando VirtualBox.
+
+\textbf{Pasos:}
+\begin{enumerate}
+    \item \textbf{Crear las máquinas virtuales}
+    \begin{itemize}
+        \item Instalar VirtualBox.
+        \item Crear dos máquinas virtuales llamadas: Linux VM A y Linux VM B.
+        \item Instalar una distribución Linux en cada una (por ejemplo Ubuntu Server o Debian).
+    \end{itemize}
+    \item \textbf{Configurar la red}
+    \begin{itemize}
+        \item Ir a Configuración $\rightarrow$ Red.
+        \item Seleccionar ``Adaptador 1''.
+        \item Elegir el modo: $\rightarrow$ ``Red interna'' o $\rightarrow$ ``Adaptador solo-anfitrión (Host-Only)''.
+        \item Asegurarse de que ambas máquinas estén en la misma red virtual.
+    \end{itemize}
+    \item \textbf{Asignar direcciones IP manualmente}
+    \begin{itemize}
+        \item En VM A: 
+        \begin{lstlisting}[language=bash]
+sudo ip addr add 192.168.100.10/24 dev enp0s3
+sudo ip link set enp0s3 up
+        \end{lstlisting}
+        \item En VM B: 
+        \begin{lstlisting}[language=bash]
+sudo ip addr add 192.168.100.20/24 dev enp0s3
+sudo ip link set enp0s3 up
+        \end{lstlisting}
+    \end{itemize}
+    \item \textbf{Probar conectividad}
+    \begin{itemize}
+        \item Desde VM A: 
+        \begin{lstlisting}[language=bash]
+ping 192.168.100.20
+        \end{lstlisting}
+        \item Si responde, la red está funcionando correctamente.
+        \item También se puede probar: \texttt{ssh}, servidor web, transferencia de archivos.
+    \end{itemize}
+\end{enumerate}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{../actividad4/ip_config.png}
+    \caption{Configuración de interfaz de red y asignación de direcciones IP en la máquina virtual.}
+    \label{fig:prac1_ip_config}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{../actividad4/ping_vm1.png}
+    \caption{Comprobación de conectividad mediante ping (Capa 3 de red).}
+    \label{fig:prac1_ping_vm1}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{../actividad4/ping_success.png}
+    \caption{Respuesta exitosa de ping, conectando exitosamente las VM en Bridge UTM.}
+    \label{fig:prac1_ping_success}
+\end{figure}
+
+\subsection{Esquema de la red}
+\begin{verbatim}
+                Red virtual (Host-Only / Interna)
+                 192.168.100.0/24
+        ----------------------------------------
+
+           IP: 192.168.100.10              IP: 192.168.100.20
+        +--------------------+         +--------------------+
+        |   Linux VM A       |         |    Linux VM B      |
+        |--------------------|         |--------------------|
+        | App cliente        | <-----> | App servidor       |
+        | TCP/UDP            |         | TCP/UDP            |
+        | IP                 |         | IP                 |
+        | Driver red virtual |         | Driver red virtual |
+        +---------|----------+         +----------|---------+
+                  |                               |
+                  +------ Adaptador virtual ------+
+\end{verbatim}
+
+\subsection{Modelo OSI Aplicado al Diseño}
+\begin{itemize}
+    \item \textbf{CAPA 7 -- APLICACIÓN:} Es donde se ejecutan los programas que utilizan la red. Ejemplo: SSH, ping, servidor web. Genera los datos que serán enviados.
+    \item \textbf{CAPA 6 -- PRESENTACIÓN:} Se encarga del formato, codificación y cifrado. Ejemplo: SSH cifra la información antes de enviarla.
+    \item \textbf{CAPA 5 -- SESIÓN:} Administra el inicio, mantenimiento y cierre de la comunicación. Ejemplo: Mantiene activa la sesión SSH hasta que el usuario la cierre.
+    \item \textbf{CAPA 4 -- TRANSPORTE:} Utiliza TCP o UDP. Divide los datos en segmentos. Controla errores, flujo y orden. Ejemplo: SSH usa TCP (puerto 22).
+    \item \textbf{CAPA 3 -- RED:} Usa direcciones IP. Se encarga del direccionamiento lógico. Ejemplo: VM A $\rightarrow$ 192.168.100.10, VM B $\rightarrow$ 192.168.100.20.
+    \item \textbf{CAPA 2 -- ENLACE DE DATOS:} Utiliza direcciones MAC. Encapsula en tramas. Detecta errores locales. Usa ARP para relacionar IP con MAC.
+    \item \textbf{CAPA 1 -- FÍSICA:} Transmite los bits. En este caso es un medio virtual. VirtualBox simula el cable de red.
+\end{itemize}
+
+\subsection{Flujo de Comunicación}
+\begin{enumerate}
+    \item La aplicación genera datos.
+    \item Se formatean y cifran.
+    \item Se establece la sesión.
+    \item TCP segmenta la información.
+    \item IP agrega direcciones.
+    \item Se encapsula en trama Ethernet.
+    \item Se transmite por el medio virtual.
+    \item La máquina destino recibe y desencapsula capa por capa.
+\end{enumerate}
+
+\section{Parte 2. Aplicación de medidas de seguridad}
+
+\subsection{Configuración de firewalls}
+Prevenir intrusiones perimetrales requiere blindar las fronteras operativas expuestas de los servicios \parencite{stallings2014}. Utilizando el sistema \texttt{UFW} (Uncomplicated Firewall) originado de \textit{iptables}, se generó un ambiente seguro que descarta el tráfico extraño ignorado, abriendo puntualmente solo las vías operacionales indispensables de la infraestructura de este trabajo:
+\begin{lstlisting}[language=bash, caption=Adición de reglas de firewall con la utilidad UFW]
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+sudo ufw allow 22/tcp       # Puerto fundamental del SSH
+sudo ufw allow 80/tcp       # Tráfico HTTP en sin encriptar
+sudo ufw allow 443/tcp      # Tráfico HTTPS cifrado de Apache
+# Puerto NFS reservado y blindado únicamente en dirección al IP Cliente específico:
+sudo ufw allow from 192.168.56.20 to any port 2049 
+sudo ufw enable             # Reinicio e iniciación de servicios
+\end{lstlisting}
+
+% Insertar captura de pantalla sudo ufw status
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{../actividad4/firewall_ufw.png}
+    \caption{Listado de estado activo y reglas restrictivas vigentes en UFW.}
+    \label{fig:firewall_ufw}
+\end{figure}
+
+\subsection{Implementación de autenticación segura}
+Habiendo abierto el puerto 22, persistía el riesgo humano de fuerza bruta SSH. Por ende, la política implementada erradicó la validez de contraseñas crudas o convencionales, cediendo su lugar de manera definitiva hacia firmas criptográficas por llaves (Asimetría en la criptografía):
+\begin{enumerate}
+    \item Desde la terminal de la Máquina Cliente de origen se corrió el comando: \texttt{ssh-keygen -t rsa -b 4096}, generando así un par combinatorio secreto para el anfitrión.
+    \item Posteriormente, el contenido exacto de ese candado público \texttt{(.pub)} se instaló a distancia gracias a \texttt{ssh-copy-id usuario@192.168.1.73}.
+    \item Evaluada la conexión inicial que ignoraba credenciales textuales, se bloqueó tajantemente a todo tercero mediante la edición nativa del archivo maestro \texttt{/etc/ssh/sshd\_config} al imponer forzosamente el parámetro final en \texttt{PasswordAuthentication no}.
+    \item Finalmente se acató una recarga con \texttt{sudo systemctl restart ssh}.
+\end{enumerate}
+
+\subsection{Configuración de HTTPS}
+Se introdujo cifrado completo punto a punto dentro de la capa de presentación / transporte web utilizando bibliotecas como la proveída por la suite \texttt{OpenSSL} interactuando con las librerías nativas de Python. Como la red de validación fue interna y de índole local (es decir, inaccesible por los canales mundiales certificados reales de Let's Encrypt), se aprovisionaron claves y certificados autofirmados (Self-Signed Certificates) que son consumidos directamente por el script \texttt{https\_server.py} que eleva un \texttt{ssl.wrap\_socket} sobre el protocolo web:
+
+\begin{lstlisting}[language=bash, caption=Proceso de creación SSL y ejecución de HTTPS nativo en Python]
+# Creación del binomio público/privado con expira a largo plazo (server.pem)
+openssl req -new -x509 -keyout server.pem -out server.pem -days 365 -nodes -subj '/CN=localhost'
+
+# Iniciar servidor seguro HTTPS en Python
+sudo python3 https_server.py
+\end{lstlisting}
+El procedimiento culminó al visitar con un cliente la URL encriptada \texttt{https://192.168.1.73} y al probar una conexión directa con \texttt{curl -k}, evidenciando un canal de comunicación web encapsulado a nivel TLS robusto pero advertido en el navegador de no poseer validación raíz comercial.
+
+\subsection{Análisis de vulnerabilidades y privacidad}
+Validar las topologías requiere auditorio informático y monitoreo pasivo. Consiguientemente, escaneamos remotamente de Máquina a Máquina todos los puertos abiertos en estado general. Utilizamos el ejecutable \texttt{Nmap} para una traza: \texttt{nmap -sV -A 192.168.1.73}. Tras analizar reportes de Nmap (y con Lynis de revisión nativa), surgen 3 riesgos/vulnerabilidades de particular atención a la privacidad corporativa:
+
+\begin{itemize}
+    \item \textbf{1. Vulnerabilidad (Exposición no regulada y huella en capas web):} Usualmente Apache puede desplegar un encabezado conteniendo las versiones internas de compilación u OS a la vista de extraños, induciendo explotación 0-day si un bug se revela en dicha versión. \\ \textbf{Solución:} Implementar ofuscación desactivando y escondiendo las firmas del Server Header en \texttt{apache2.conf} (\texttt{ServerSignature Off} y \texttt{ServerTokens Prod}).
+    \item \textbf{2. Vulnerabilidad (Sobreuso de peticiones - Denegación DDOS HTTP/SSH):} Nuestro entorno de acceso remoto está publicado correctamente, mas es vulnerable a inundación abusiva volumétrica que acapare CPU (Ataque DDos) impidiéndonos operar nuestro propio equipo. \\ \textbf{Solución:} Complementar al firewall habilitado de Linux con una herramienta antispam como \texttt{fail2ban}, bloqueando al instante en Netfilter (Iptables/UFW) la procedencia IP de quién cause colapsos con intentos repetitivos excesivos o tráfico anómalo.
+    \item \textbf{3. Riesgo de Intrusión Intermedia (Man In The Middle - MitM):} Como se advirtió, los certificados emitidos al HTTPS local carecen de validador universal central; son autofirmados. Alguien interno en la oficina o red local manipulando envenenamientos con protocolos de resolución (ARP) pudiese clonar la validación e interceptar comunicaciones engañando al usuario incauto. \\ \textbf{Solución:} Distribuir certificados de autoridades corporativas validados u obtenidos verídicamente de agencias de confianza global (\textit{Let's Encrypt}) para asegurar inviolabilidad perimetral total confirmada del cifrado de túnel HTTPS local.
+\end{itemize}
+
+% Insertar captura de vulnerabilidades nmap
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{../actividad4/nmap_scan_vulnerabilities.png}
+    \caption{Fragmento de demostración tras revisión de vulnerabilidades aplicadas a la IP local ejecutando comandos Nmap.}
+    \label{fig:nmapscan}
+\end{figure}
+
+\section{Parte 2. Aplicación de medidas de seguridad}
+
+A continuación, se detalla la implementación de medidas de seguridad fundamentales sobre las dos máquinas virtuales operando con \textbf{Ubuntu 25} en una red configurada en modo \textbf{Bridge} (Adaptador Puente).
+
+\subsection{Configuración de Firewall (UFW)}
+Para prevenir accesos no autorizados, se configuró el cortafuegos \texttt{UFW} estableciendo una política restrictiva por defecto, abriendo exclusivamente los puertos requeridos para las prácticas de red (SSH y P2P/NFS).
+
+\textbf{Ejecución en la Máquina 1 (Servidor):}
+\begin{lstlisting}[language=bash]
+# 1. Actualizar repositorios e instalar UFW
+sudo apt update
+sudo apt install ufw -y
+
+# 2. Denegar conexiones entrantes por defecto, permitir salientes
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+
+# 3. Permitir servicios esenciales para la práctica
+sudo ufw allow 22/tcp       # Permitir SSH
+sudo ufw allow 80/tcp       # Permitir HTTP (Opcional)
+sudo ufw allow 443/tcp      # Permitir HTTPS (Opcional)
+
+# Puertos para P2P (Transmission) y NFS de la Parte 3
+sudo ufw allow 51413/tcp    # Puerto BitTorrent P2P
+sudo ufw allow 51413/udp    # Puerto BitTorrent P2P UDP
+sudo ufw allow 2049         # Puerto para NFS
+
+# 4. Habilitar el Firewall
+sudo ufw enable
+
+# 5. Comprobar el estado y las reglas aplicadas
+sudo ufw status verbose
+\end{lstlisting}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{../actividad4/ufw_status.png}
+    \caption{Comprobación de reglas activas y puertos de tráfico permitidos en el firewall UFW.}
+    \label{fig:prac2_ufw_status}
+\end{figure}
+
+\subsection{Hardening de SSH (Autenticación Criptográfica)}
+Se eliminó la vulnerabilidad inherente al uso de contraseñas de texto plano, transicionando forzosamente a un modelo de autenticación asimétrica utilizando llaves criptográficas RSA.
+
+\textbf{Ejecución en la Máquina 2 (Cliente):}
+\begin{lstlisting}[language=bash]
+# 1. Generar un par de claves criptográficas locales (RSA)
+ssh-keygen -t rsa -b 4096
+
+# 2. Copiar la llave pública generada al servidor
+# Reemplazar <IP_DEL_SERVIDOR> por la IP de la Máquina 1
+ssh-copy-id estudiante@<IP_DEL_SERVIDOR>
+
+# 3. Probar el inicio de sesión criptográfico
+ssh estudiante@<IP_DEL_SERVIDOR>
+\end{lstlisting}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{../actividad4/ssh_copy_id.png}
+    \caption{Copia exitosa de la llave pública asimétrica RSA hacia el servidor.}
+    \label{fig:prac2_ssh_copy_id}
+\end{figure}
+
+\textbf{Ejecución en la Máquina 1 (Servidor) - Tras validar el acceso con llave:}
+\begin{lstlisting}[language=bash]
+# 1. Editar el archivo de configuración maestro del servicio SSH
+sudo nano /etc/ssh/sshd_config
+
+# 2. Modificar las siguientes directivas para deshabilitar logins inseguros:
+PermitRootLogin no
+PasswordAuthentication no
+
+# 3. Reiniciar el servicio SSH para aplicar políticas
+sudo systemctl restart ssh
+\end{lstlisting}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{../actividad4/ssh_config.png}
+    \caption{Modificación del archivo maestro \texttt{sshd\_config} para prohibir las contraseñas planas.}
+    \label{fig:prac2_ssh_config}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{../actividad4/ssh_login.png}
+    \caption{Login remoto de inmediato y sin contraseñas validando el acceso a través de la llave SSH.}
+    \label{fig:prac2_ssh_login}
+\end{figure}
+
+\subsection{Prevención de Intrusiones (Fail2ban)}
+Como medida paliativa activa contra ataques de denegación de servicio (DoS) o fuerza bruta volumétrica dirigida al puerto SSH recién endurecido, se implementó la herramienta \texttt{fail2ban}.
+
+\textbf{Ejecución en la Máquina 1 (Servidor):}
+\begin{lstlisting}[language=bash]
+# 1. Instalar la herramienta
+sudo apt install fail2ban -y
+
+# 2. El servicio se inicia automáticamente. Comprobar que corre:
+sudo systemctl status fail2ban
+
+# 3. Revisar si hay intentos de bloqueo en SSH
+sudo fail2ban-client status sshd
+\end{lstlisting}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{../actividad4/fail2ban.png}
+    \caption{Servicio Fail2ban activo, monitorizando activamente la seguridad del puerto local SSH.}
+    \label{fig:prac2_fail2ban}
+\end{figure}
+
+\subsection{Cifrado HTTPS (Certificados Autofirmados)}
+En caso de requerir asegurar un servicio web local, se demostró la generación de un certificado de infraestructura pública encriptada utilizando las librerías nativas de \texttt{OpenSSL} de Ubuntu 25.
+
+\textbf{Ejecución en la Máquina 1 (Servidor):}
+\begin{lstlisting}[language=bash]
+# 1. Instalar OpenSSL
+sudo apt install openssl -y
+
+# 2. Generar el certificado autofirmado para pruebas locales (Válido 365 días)
+sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/ssl/private/apache-selfsigned.key -out /etc/ssl/certs/apache-selfsigned.crt
+\end{lstlisting}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{../actividad4/openssl_cert.png}
+    \caption{Generación de claves y certificados X.509 autofirmados vía línea de comandos con OpenSSL.}
+    \label{fig:prac2_openssl_cert}
+\end{figure}
+
+\subsection{Configuración Inicial}
+\textbf{Requisitos:}
+\begin{itemize}
+    \item 2 máquinas virtuales con Ubuntu (20.04/22.04/24.04)
+    \item Misma red (adaptador puente o red NAT interna)
+    \item Mismo usuario en ambas máquinas (ej: estudiante)
+    \item Conectividad entre máquinas verificada con ping
+\end{itemize}
+
+Verificar conectividad:
+\begin{lstlisting}[language=bash]
+# Desde cualquier máquina, verificar su IP
+ip addr show | grep inet
+
+# Hacer ping a la otra máquina (usar su IP)
+ping <IP_DE_LA_OTRA_MAQUINA>
+\end{lstlisting}
+
+\subsection{Sistema de Archivos Distribuido (NFS)}
+\textbf{Objetivo:} Compartir una carpeta entre dos máquinas usando NFS para que ambas puedan leer y escribir archivos de forma transparente.
+
+\textbf{1.1 Configuración del Servidor NFS (Máquina 1)}
+\begin{lstlisting}[language=bash]
+# 1. Actualizar repositorios
+sudo apt update
+
+# 2. Instalar servidor NFS
+sudo apt install nfs-kernel-server -y
+
+# 3. Crear carpeta a compartir
+sudo mkdir -p /srv/nfs/compartido
+sudo chmod 777 /srv/nfs/compartido
+sudo chown nobody:nogroup /srv/nfs/compartido
+
+# 4. Configurar exports (permitir acceso desde cualquier IP para pruebas)
+# sudo nano /etc/exports
+# Añadir la siguiente línea al final del archivo:
+# /srv/nfs/compartido *(rw,sync,no_subtree_check,no_root_squash,insecure)
+
+# 5. Aplicar configuración
+sudo exportfs -ra
+sudo systemctl restart nfs-kernel-server
+
+# 6. Verificar que está compartiendo
+sudo exportfs -v
+sudo showmount -e localhost
+\end{lstlisting}
+
+\textbf{1.2 Configuración del Cliente NFS (Máquina 2)}
+\begin{lstlisting}[language=bash]
+# 1. Actualizar repositorios
+sudo apt update
+
+# 2. Instalar cliente NFS
+sudo apt install nfs-common -y
+
+# 3. Crear punto de montaje
+sudo mkdir -p /mnt/servidor_nfs
+
+# 4. Verificar que el servidor exporta la carpeta
+showmount -e <IP_DEL_SERVIDOR>
+
+# 5. Montar la carpeta compartida
+sudo mount -t nfs <IP_DEL_SERVIDOR>:/srv/nfs/compartido /mnt/servidor_nfs
+
+# 6. Verificar montaje
+df -h | grep nfs
+mount | grep nfs
+\end{lstlisting}
+
+\textbf{1.3 Pruebas de funcionamiento}
+
+En el CLIENTE:
+\begin{lstlisting}[language=bash]
+# Crear archivo desde el cliente
+echo "Hola desde la máquina cliente" | sudo tee /mnt/servidor_nfs/cliente.txt
+
+# Listar contenido
+ls -la /mnt/servidor_nfs/
+\end{lstlisting}
+
+En el SERVIDOR:
+\begin{lstlisting}[language=bash]
+# Verificar que el archivo llegó
+ls -la /srv/nfs/compartido/
+cat /srv/nfs/compartido/cliente.txt
+
+# Modificar desde el servidor
+echo "Modificado desde el servidor" | sudo tee -a /srv/nfs/compartido/cliente.txt
+\end{lstlisting}
+
+En el CLIENTE:
+\begin{lstlisting}[language=bash]
+# Verificar cambios
+cat /mnt/servidor_nfs/cliente.txt
+\end{lstlisting}
+
+Prueba bidireccional:
+\begin{lstlisting}[language=bash]
+# Desde cliente crear otro archivo
+touch /mnt/servidor_nfs/prueba_final.txt
+
+# Desde servidor verificarlo
+ls -la /srv/nfs/compartido/
+\end{lstlisting}
+
+\textbf{1.4 Hacer montaje permanente (opcional)}
+
+En el CLIENTE:
+\begin{lstlisting}[language=bash]
+# sudo nano /etc/fstab
+# Añadir la siguiente línea:
+# <IP_DEL_SERVIDOR>:/srv/nfs/compartido /mnt/servidor_nfs nfs defaults 0 0
+\end{lstlisting}
+
+\textbf{1.5 Solución de problemas comunes}
+\begin{lstlisting}[language=bash]
+# Verificar servicios
+sudo systemctl status nfs-kernel-server
+sudo systemctl status rpcbind
+
+# Ver logs
+sudo tail -f /var/log/syslog | grep nfs
+
+# Reiniciar servicios
+sudo systemctl restart rpcbind
+sudo systemctl restart nfs-kernel-server
+
+# Desactivar firewall para pruebas
+sudo ufw disable
+
+# Verificar conectividad de puertos
+nc -zv <IP_DEL_SERVIDOR> 2049
+\end{lstlisting}
+
+\textbf{1.6 Conceptos de transparencia observados}
+\begin{itemize}
+    \item Transparencia de acceso: El cliente accede a los archivos como si fueran locales.
+    \item Transparencia de ubicación: El usuario desconoce dónde están físicamente los datos.
+    \item Transparencia de escalamiento: Se pueden añadir más clientes fácilmente.
+\end{itemize}
+
+\subsection{Red Peer-to-Peer (BitTorrent)}
+\textbf{Objetivo:} Compartir un archivo entre dos máquinas usando el protocolo BitTorrent, demostrando las características del modelo P2P como descentralización, escalabilidad y resiliencia.
+
+\textbf{2.1 Instalación en AMBAS máquinas}
+\begin{lstlisting}[language=bash]
+# En ambas máquinas (servidor y cliente)
+sudo apt update
+sudo apt install transmission-cli transmission-daemon -y
+
+# Iniciar servicio
+sudo systemctl start transmission-daemon
+sudo systemctl enable transmission-daemon
+
+# Verificar estado
+sudo systemctl status transmission-daemon
+\end{lstlisting}
+
+\textbf{2.2 Configuración básica (opcional)}
+
+Si es necesario modificar la configuración:
+\begin{lstlisting}[language=bash]
+# Detener servicio antes de configurar
+sudo systemctl stop transmission-daemon
+
+# Editar configuración
+# sudo nano /var/lib/transmission-daemon/info/settings.json
+\end{lstlisting}
+
+Ajustes recomendados para laboratorio:
+\begin{lstlisting}[]
+{
+    "rpc-whitelist-enabled": false,
+    "rpc-authentication-required": false,
+    "peer-port": 51413,
+    "dht-enabled": true,
+    "pex-enabled": true,
+    "lpd-enabled": true
+}
+\end{lstlisting}
+\begin{lstlisting}[language=bash]
+# Iniciar servicio nuevamente
+sudo systemctl start transmission-daemon
+\end{lstlisting}
+
+\textbf{2.3 Crear archivo a compartir (en la máquina seeder)}
+\begin{lstlisting}[language=bash]
+# Crear carpeta para el archivo
+mkdir -p ~/p2p-compartido
+cd ~/p2p-compartido
+
+# Crear archivos de prueba
+echo "Este es un archivo de prueba para el laboratorio P2P" > documento.txt
+echo "Contenido adicional" >> documento.txt
+
+# Opcional: crear un archivo binario de mayor tamaño
+dd if=/dev/urandom of=archivo.bin bs=1M count=5
+
+# Verificar archivos creados
+ls -la
+\end{lstlisting}
+
+\textbf{2.4 Crear archivo .torrent (en la máquina seeder)}
+\begin{lstlisting}[language=bash]
+cd ~/p2p-compartido
+
+# Crear torrent con trackers públicos
+transmission-create -o ~/compartido.torrent \
+  -t udp://tracker.openbittorrent.com:80 \
+  -t udp://tracker.opentrackr.org:1337/announce \
+  -t udp://tracker.coppersurfer.tk:6969/announce \
+  .
+
+# Verificar creación
+ls -la ~/compartido.torrent
+\end{lstlisting}
+
+Explicación de parámetros:
+\begin{itemize}
+    \item \texttt{-o}: Archivo de salida (el .torrent)
+    \item \texttt{-t}: URL del tracker (varios para mayor probabilidad de conexión)
+    \item \texttt{.}: Directorio actual a compartir (puede ser un archivo específico)
+\end{itemize}
+
+\textbf{2.5 Compartir el archivo (seeding) en la máquina seeder}
+\begin{lstlisting}[language=bash]
+# Añadir el torrent a Transmission
+transmission-remote -a ~/compartido.torrent -w ~/p2p-compartido
+
+# Verificar que está seedeando
+transmission-remote -l
+\end{lstlisting}
+La salida debe mostrar:
+\begin{itemize}
+    \item Done: 100\%
+    \item State: Seeding o Idle (si no hay peers conectados)
+\end{itemize}
+
+\textbf{2.6 Transferir el archivo .torrent a la otra máquina}
+
+Opción A: Usando scp (recomendado)
+\begin{lstlisting}[language=bash]
+# En la máquina seeder, enviar el archivo a la otra máquina
+scp ~/compartido.torrent usuario@<IP_OTRA_MAQUINA>:~/
+\end{lstlisting}
+
+Opción B: Usando la carpeta NFS (si ya está configurada)
+\begin{lstlisting}[language=bash]
+# Copiar a la carpeta compartida por NFS
+cp ~/compartido.torrent /srv/nfs/compartido/
+
+# En la otra máquina, copiar desde allí
+cp /mnt/servidor_nfs/compartido.torrent ~/
+\end{lstlisting}
+
+\textbf{2.7 Descargar el archivo (en la máquina cliente)}
+\begin{lstlisting}[language=bash]
+# Verificar que el archivo .torrent llegó
+ls -la ~/compartido.torrent
+
+# Añadir el torrent a Transmission
+transmission-remote -a ~/compartido.torrent -w ~/Descargas
+
+# Iniciar la descarga (si no comienza automáticamente)
+transmission-remote -t all -s
+
+# Verificar estado de la descarga
+transmission-remote -l
+\end{lstlisting}
+
+\textbf{2.8 Monitorear la transferencia}
+
+En la máquina seeder:
+\begin{lstlisting}[language=bash]
+# Ver estado en tiempo real
+watch -n 2 transmission-remote -l
+\end{lstlisting}
+
+En la máquina cliente:
+\begin{lstlisting}[language=bash]
+# Ver progreso de descarga
+watch -n 2 transmission-remote -l
+
+# Ver detalles del torrent
+transmission-remote -t 1 -i
+\end{lstlisting}
+
+\textbf{2.9 Verificar la descarga (en la máquina cliente)}
+\begin{lstlisting}[language=bash]
+# Una vez completada la descarga (100%)
+ls -la ~/Descargas/
+cat ~/Descargas/documento.txt
+
+# Comparar con el archivo original (opcional)
+md5sum ~/Descargas/archivo.bin
+# En la máquina seeder:
+md5sum ~/p2p-compartido/archivo.bin
+# Deben ser iguales
+\end{lstlisting}
+
+\textbf{2.10 Solución de problemas en P2P}
+\begin{lstlisting}[language=bash]
+# Verificar que el servicio está corriendo
+sudo systemctl status transmission-daemon
+
+# Ver logs
+sudo journalctl -u transmission-daemon -f
+
+# Verificar puertos
+sudo ss -tulpn | grep 51413
+
+# Abrir puertos en firewall
+sudo ufw allow 51413/tcp
+sudo ufw allow 51413/udp
+
+# Verificar conectividad entre máquinas
+nc -zv <IP_OTRA_MAQUINA> 51413
+
+# Forzar reanuncio del tracker
+transmission-remote -t all -r
+
+# Añadir peers manualmente (si es necesario)
+transmission-remote -t all -padd <IP_OTRA_MAQUINA>:51413
+
+# Ver lista de peers
+transmission-remote -t all -pi
+\end{lstlisting}
+
+\textbf{2.11 Características del modelo P2P observadas}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|p{4cm}|p{10cm}|}
+\hline
+\textbf{Característica} & \textbf{Observación en el laboratorio} \\ \hline
+Descentralización & No hay un servidor central, ambas máquinas se conectan directamente \\ \hline
+Escalabilidad & Si más máquinas se unen, la velocidad de descarga puede mejorar \\ \hline
+Resiliencia & Si el seeder se desconecta, otros peers pueden seguir compartiendo \\ \hline
+Tragedia del común & Si todos descargan y nadie comparte, la red falla \\ \hline
+Intercambio de piezas & Los archivos se dividen en piezas que se intercambian \\ \hline
+\end{tabular}
+\end{table}
+
+\textbf{2.12 Comandos útiles de transmission-remote}
+\begin{lstlisting}[language=bash]
+# Listar todos los torrents
+transmission-remote -l
+
+# Ver información detallada de un torrent
+transmission-remote -t <ID> -i
+
+# Iniciar un torrent
+transmission-remote -t <ID> -s
+
+# Pausar un torrent
+transmission-remote -t <ID> -S
+
+# Eliminar un torrent (sin borrar datos)
+transmission-remote -t <ID> -r
+
+# Eliminar un torrent y borrar datos
+transmission-remote -t <ID> -rad
+
+# Añadir tracker
+transmission-remote -t <ID> -td "udp://nuevo.tracker.com:80"
+
+# Ver peers
+transmission-remote -t <ID> -pi
+
+# Ver información de sesión
+transmission-remote -si
+\end{lstlisting}
+
+\subsection{Reflexión sobre sistemas distribuidos}
+
+\textbf{3.1 Características observadas en NFS}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|p{4cm}|p{10cm}|}
+\hline
+\textbf{Característica} & \textbf{Descripción} \\ \hline
+Compartición de recursos & El servidor comparte su almacenamiento con el cliente \\ \hline
+Transparencia & El cliente accede a los archivos como si fueran locales \\ \hline
+Concurrencia & Múltiples clientes pueden acceder a los mismos archivos \\ \hline
+Punto único de fallo & Si el servidor falla, nadie accede a los datos \\ \hline
+\end{tabular}
+\end{table}
+
+\textbf{3.2 Características observadas en BitTorrent}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|p{4cm}|p{10cm}|}
+\hline
+\textbf{Característica} & \textbf{Descripción} \\ \hline
+Descentralización & No hay servidor central, todos son pares \\ \hline
+Escalabilidad & Más peers = más ancho de banda disponible \\ \hline
+Resiliencia & Si un peer falla, otros continúan \\ \hline
+Auto-organización & Los peers se descubren y organizan sin intervención \\ \hline
+\end{tabular}
+\end{table}
+
+\textbf{3.3 Ventajas y desventajas}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|p{3cm}|p{5cm}|p{6cm}|}
+\hline
+\textbf{Sistema} & \textbf{Ventajas} & \textbf{Desventajas} \\ \hline
+NFS & Simple, transparente, fácil gestión centralizada & Punto único de fallo, cuello de botella \\ \hline
+BitTorrent & Escalable, robusto, eficiente para archivos grandes & Complejidad, dependencia de trackers \\ \hline
+\end{tabular}
+\end{table}
+
+\textbf{Anexo: Comandos Rápidos}
+
+NFS - Resumen rápido
+\begin{lstlisting}[language=bash]
+# Servidor
+sudo apt install nfs-kernel-server
+sudo mkdir -p /srv/nfs/compartido
+sudo chmod 777 /srv/nfs/compartido
+echo "/srv/nfs/compartido *(rw,sync,no_subtree_check)" | sudo tee -a /etc/exports
+sudo exportfs -ra
+sudo systemctl restart nfs-kernel-server
+
+# Cliente
+sudo apt install nfs-common
+sudo mkdir -p /mnt/servidor_nfs
+sudo mount -t nfs <IP_SERVIDOR>:/srv/nfs/compartido /mnt/servidor_nfs
+\end{lstlisting}
+
+P2P - Resumen rápido
+\begin{lstlisting}[language=bash]
+# Ambas máquinas
+sudo apt install transmission-cli transmission-daemon
+sudo systemctl start transmission-daemon
+
+# Seeder
+mkdir -p ~/p2p
+cd ~/p2p
+echo "test" > archivo.txt
+transmission-create -o ~/compartido.torrent -t udp://tracker.openbittorrent.com:80 .
+transmission-remote -a ~/compartido.torrent -w ~/p2p
+
+# Cliente
+scp <usuario>@<IP_SERVIDOR>:~/compartido.torrent ~/
+transmission-remote -a ~/compartido.torrent -w ~/Descargas
+transmission-remote -t all -s
+\end{lstlisting}
+
+\chapter{Análisis y reflexión}
+
+El ensamble final integrando conceptos pragmáticos del curso logró trazar en el plano material los hilos comunicativos conceptuales correspondientes al modelo puramente teórico (OSI), estableciendo una relación sólida entre la teoría académica y su aplicación funcional.
+
+\textbf{Tres aprendizajes obtenidos directos:}
+\begin{enumerate}
+    \item La seguridad perimetral carece de soluciones monolíticas absolutas; de esta actividad se desprende imperativamente que blindar una red requiere esquematizarse con engranajes redundantes continuos (ej. uso conjunto de firewalls restrictivos UFW más el resguardo de llaves asimétricas).
+    \item La ejecución de un micro-servidor HTTPS comprobó analíticamente cómo funcionan las negociaciones TLS desde adentro, atestiguando que la capa de red subyacente puede converger localmente sin precisar de hiper-estructuras robustas mundiales de un C.A. externo publicitado.
+    \item La transparencia fundamental de un sistema distribuido como NFS es vital para su proliferación corporativa escalable. Evidencia la practicidad de brindar cuotas nativas crudas con una carpeta de sincronía completa bidireccional sin lastimar los procesos paralelos de lectura/escritura (I/O).
+\end{enumerate}
+
+\textbf{Dos desafíos enfrentados y su solución técnica:}
+\begin{itemize}
+    \item \textbf{Desafío 1 - Aislamiento DNS y Virtualidad de Red:} Tras aislar localmente la IP al intentar confinar tráfico, el servidor perdió provisión externa en \texttt{127.0.0.53} y hubo fracaso descargando Nmap/NFS, bloqueado a su vez bajo un error silencioso asíncrono en \texttt{ports.ubuntu.com}. \\ \textbf{Solución:} Se debió destituir momentáneamente la imposición hostil del UFW mediante \texttt{sudo ufw disable} y se procedió con una técnica blanda de reinstalar DHCP dinámico en Netplan (\texttt{dhcp4: true}) para destrabar al hipervisor UTM resolviendo así la descarga paralela y reescribiendo la tabla ARP transitoria, restaurando conectividad global.
+    \item \textbf{Desafío 2 - Conflicto de firmas HTTPS nativas:} Inconvenientes lógicos y caídas abrutas al encapsular el servicio HTTP convencional en sub-demonios de encriptación autofirmados sin utilizar dependencias mediadoras como Apache HTTP Server. \\ \textbf{Solución:} Se requirió implementar nativamente el encapsulamiento paramétrico de Python a través de dependencias estrictas interactivas (\texttt{ssl.wrap\_socket}), integrando y reconduciendo la envoltura en memoria para que no abortara prematuramente ante rechazo por validación raíz comercial inexistente.
+\end{itemize}
+
+\chapter{Conclusiones}
+
+El recorrido y desglose progresivo del presente reporte atestigua indudablemente un hecho pragmático: el conocimiento de redes de comunicaciones no es trivial, y se entrelaza estrechamente con el blindaje seguro y el análisis logístico en su aplicación empresarial diaria. Es vital reconocer a todo esquema de autenticación como inerte per se frente a escalamientos y fisuras, puesto que ignorar directrices como un canal encriptado moderno o dejar abierto de forma pasiva fallas triviales detectadas en un reporte local arroja brechas para intrusos y ransomware. 
+
+Sintetizando conclusiones, los protocolos y despliegues virtualizados del paradigma de Sistemas Operativos Distribuidos y sus implementaciones de pares P2P demuestran ser innovaciones eficientes, fiables y transparentes destinadas fundamentalmente para equilibrar latencias con descentralización de recursos y maximizar capacidades de usuarios aislados; no obstante, todo esto debe acoplarse y subyugarse siempre al correcto monitoreo preventivo de un control de flujos auditable capaz y con las salvaguardas restrictivas competentes para asegurar su persistencia estable e ininterrumpible.
+
+\newpage
+
+% 4. Referencias bibliográficas
+   %% Forza inclusión de las citaciones de referencias
+
+
+\part{Proyecto Final}
+
+\chapter{Introducción}
+
+\section{Descripción General}
+
+El \textbf{Remote Process Manager} es un sistema de administración de procesos distribuido desarrollado íntegramente en lenguaje C, utilizando las APIs POSIX del sistema operativo. El proyecto permite a un cliente remoto conectarse a un servidor (alojado en una instancia \textbf{AWS EC2}) para realizar operaciones fundamentales de gestión de procesos: listar los procesos activos, iniciar nuevos procesos y detener procesos en ejecución.
+
+La arquitectura cliente-servidor está construida sobre comunicación \textbf{TCP directa}, lo que garantiza conexiones confiables y de baja latencia a través de redes públicas e incluso a través de firewalls configurados mediante AWS Security Groups.
+
+\section{Motivación y Contexto}
+
+La gestión remota de procesos es una necesidad fundamental en entornos de cómputo distribuido, administración de servidores en la nube y despliegue de aplicaciones. Este proyecto aborda esa necesidad de manera didáctica pero funcional, implementando desde cero —sin dependencias externas más allá de la biblioteca estándar de C y las APIs POSIX— un sistema capaz de:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item Transmitir listas completas de procesos del sistema operativo a través de la red.
+  \item Iniciar y detener procesos reales utilizando llamadas al sistema \texttt{fork()} y \texttt{exec()}.
+  \item Atender múltiples clientes de forma concurrente mediante hilos POSIX (\textit{pthreads}).
+\end{itemize}
+
+\section{Alcance del Proyecto}
+
+El proyecto comprende:
+
+\begin{enumerate}[leftmargin=1.5em]
+  \item Un servidor TCP multihilo escrito en C.
+  \item Un cliente de línea de comandos interactivo.
+  \item Makefiles separados para compilación de cliente y servidor.
+  \item Scripts de despliegue en AWS EC2.
+  \item Configuración de servicio \texttt{systemd} para ejecución como demonio.
+  \item Pruebas de funcionalidad básica.
+\end{enumerate}
+
+% ═══════════════════════════════════════════════════════════════════════════════
+\chapter{Arquitectura del Sistema}
+
+\section{Visión General}
+
+El sistema sigue una arquitectura \textbf{cliente-servidor clásica} sobre TCP/IP, con las siguientes capas:
+
+\begin{figure}[H]
+  \centering
+  \begin{tcolorbox}[colback=grisClaro, colframe=azulTitulo, width=0.85\textwidth,
+                    title=\textbf{Diagrama de Arquitectura}]
+    \centering
+    \ttfamily\small
+    \begin{tabular}{ccc}
+      \textbf{[Cliente Local]} & $\xrightarrow{\text{TCP puerto 5002}}$ & \textbf{[Servidor AWS EC2]} \\
+      \texttt{client\_bin}     &                                         & \texttt{server\_bin}        \\
+      macOS / Linux            &                                         & Ubuntu / Linux              \\
+    \end{tabular}\\[1em]
+    \normalfont\small
+    El servidor atiende cada conexión en un hilo POSIX independiente.
+  \end{tcolorbox}
+  \caption{Arquitectura general del sistema}
+\end{figure}
+
+\section{Componentes Principales}
+
+\subsection{Servidor (\texttt{server\_bin})}
+
+El servidor es el componente central del sistema. Sus responsabilidades son:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item Escuchar conexiones entrantes en el \textbf{puerto TCP 5002}.
+  \item Por cada cliente conectado, crear un hilo POSIX (\texttt{pthread}) para atenderlo de forma concurrente.
+  \item Procesar los comandos enviados por el cliente: \texttt{LIST}, \texttt{START}, \texttt{STOP}.
+  \item Para el comando \texttt{LIST}, ejecutar el comando del sistema y capturar su salida mediante pipes (\texttt{popen}).
+  \item Para el comando \texttt{START}, crear procesos hijo con \texttt{fork()}/\texttt{exec()}.
+  \item Para el comando \texttt{STOP}, enviar señales al proceso objetivo con \texttt{kill()}.
+\end{itemize}
+
+\subsection{Cliente (\texttt{client\_bin})}
+
+El cliente es una herramienta de línea de comandos interactiva que:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item Solicita al usuario la dirección IP del servidor al inicio.
+  \item Establece una conexión TCP persistente con el servidor.
+  \item Lee comandos del usuario y los envía al servidor.
+  \item Recibe y muestra la respuesta del servidor en pantalla.
+  \item Soporta el comando \texttt{EXIT} para terminar la sesión limpiamente.
+\end{itemize}
+
+\subsection{Interfaz de Usuario (TUI)}
+
+El cliente incorpora una interfaz de usuario basada en texto (TUI) desarrollada con la biblioteca \textbf{ncurses}. Esta interfaz proporciona una experiencia interactiva y visualmente estructurada para la gestión de procesos remotos.
+
+\begin{itemize}[leftmargin=1.5em]
+  \item \textbf{Gestión de Paneles}: La pantalla se divide en tres áreas principales:
+    \begin{itemize}
+      \item \textbf{Panel de Procesos}: Muestra la lista de procesos recibida del servidor, con soporte para scroll mediante las teclas de dirección.
+      \item \textbf{Panel de Entrada}: Un prompt interactivo donde el usuario puede escribir comandos directamente.
+      \item \textbf{Barra de Estado}: Muestra información sobre la conexión actual y accesos directos a funciones globales.
+    \end{itemize}
+  \item \textbf{Diálogos Modales}: Implementa ventanas emergentes para tareas específicas:
+    \begin{itemize}
+      \item \textbf{Conexión}: Un formulario inicial para ingresar la IP y el puerto del servidor.
+      \item \textbf{Ayuda (F1)}: Muestra la referencia de comandos disponibles.
+      \item \textbf{Nuevo Proceso (F2)}: Facilita el lanzamiento de programas sin usar el prompt principal.
+    \end{itemize}
+  \item \textbf{Retroalimentación Visual}: Utiliza una paleta de colores personalizada para distinguir entre encabezados, selecciones y mensajes de error.
+\end{itemize}
+
+\subsection{Estructura de Directorios}
+
+\begin{tcolorbox}[colback=grisClaro, colframe=gray!40]
+\begin{verbatim}
+avanceProyecto/
+|-- src/              # Código fuente (C)
+|-- doc/              # Documentación del proyecto
+|-- tests/            # Pruebas
+|-- Makefile.client   # Makefile para compilar el cliente
+|-- Makefile.server   # Makefile para compilar el servidor
+|-- ec2-control.sh    # Script de control de instancia EC2
+|-- proc-manager.service  # Unidad systemd
+|-- client_bin        # Binario del cliente (compilado)
+|-- src.zip           # Código fuente comprimido
+`-- README.md         # Documentación principal
+\end{verbatim}
+\end{tcolorbox}
+
+\section{Protocolo de Comunicación}
+
+La comunicación entre cliente y servidor se realiza mediante un protocolo de texto simple sobre TCP:
+
+\begin{longtable}{>{\ttfamily}p{4cm} p{4.5cm} p{5cm}}
+  \toprule
+  \textbf{Comando} & \textbf{Descripción} & \textbf{Respuesta del Servidor} \\
+  \midrule
+  \endhead
+  LIST & Lista todos los procesos activos & Salida de \texttt{ps aux} (hasta 64 KB) \\
+  START \textit{<cmd>} & Inicia un proceso & PID asignado o mensaje de error \\
+  STOP \textit{<pid>} & Detiene un proceso por PID & Confirmación o mensaje de error \\
+  EXIT & Termina la sesión & Cierre de conexión \\
+  \bottomrule
+  \caption{Protocolo de comandos del sistema}
+\end{longtable}
+
+\section{Capacidades del Buffer}
+
+Un aspecto técnico importante es el tamaño del buffer de transmisión: \textbf{64 KB (65,536 bytes)}. Esta decisión de diseño permite transmitir listas de procesos completas en sistemas con muchos procesos en ejecución, superando las limitaciones de buffers estándar de 4 KB o menos.
+
+% ═══════════════════════════════════════════════════════════════════════════════
+\chapter{Tecnologías y Herramientas}
+
+\section{Lenguaje de Programación: C}
+
+El proyecto está desarrollado al \textbf{99.3\%} en lenguaje C, con el restante 0.7\% en Shell. La elección de C se justifica por:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item \textbf{Acceso directo a APIs del sistema operativo}: Las llamadas POSIX como \texttt{fork()}, \texttt{exec()}, \texttt{kill()}, \texttt{socket()}, \texttt{pthread\_create()} están disponibles nativamente.
+  \item \textbf{Alto rendimiento}: Consumo mínimo de memoria y CPU sin overhead de máquinas virtuales ni intérpretes.
+  \item \textbf{Control total}: Manejo explícito de memoria, descriptores de archivo y señales.
+  \item \textbf{Portabilidad POSIX}: Compatible con cualquier sistema Linux/Unix.
+\end{itemize}
+
+\section{APIs POSIX Utilizadas}
+
+\subsection{Gestión de Procesos}
+
+\begin{tcolorbox}[colback=grisClaro, colframe=azulTitulo, title=\textbf{Llamadas al Sistema — Procesos}]
+\begin{lstlisting}[style=cstyle, numbers=none]
+pid_t fork(void);           // Crea un proceso hijo
+int execvp(const char *file, char *const argv[]);  // Ejecuta comando
+int kill(pid_t pid, int sig); // Envia señal a proceso
+pid_t waitpid(pid_t pid, int *status, int options); // Espera hijo
+FILE *popen(const char *command, const char *type); // Pipe a proceso
+\end{lstlisting}
+\end{tcolorbox}
+
+\subsection{Comunicación en Red (Sockets)}
+
+\begin{tcolorbox}[colback=grisClaro, colframe=azulTitulo, title=\textbf{Llamadas al Sistema — Sockets TCP}]
+\begin{lstlisting}[style=cstyle, numbers=none]
+int socket(int domain, int type, int protocol);
+int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+int listen(int sockfd, int backlog);
+int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
+int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+ssize_t send(int sockfd, const void *buf, size_t len, int flags);
+ssize_t recv(int sockfd, void *buf, size_t len, int flags);
+\end{lstlisting}
+\end{tcolorbox}
+
+\subsection{Multihilo con pthreads}
+
+\begin{tcolorbox}[colback=grisClaro, colframe=azulTitulo, title=\textbf{API de Hilos POSIX}]
+\begin{lstlisting}[style=cstyle, numbers=none]
+int pthread_create(pthread_t *thread, const pthread_attr_t *attr,
+                   void *(*start_routine)(void *), void *arg);
+int pthread_detach(pthread_t thread);
+int pthread_join(pthread_t thread, void **retval);
+\end{lstlisting}
+\end{tcolorbox}
+
+\section{Herramientas de Construcción}
+
+\subsection{GNU Make}
+
+El proyecto utiliza \textbf{Makefiles separados} para cliente y servidor, lo que permite compilarlos de forma independiente según el entorno de destino:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item \texttt{Makefile.server}: Compila el servidor, sus dependencias y genera los binarios auxiliares instalados en \texttt{/usr/local/bin}.
+  \item \texttt{Makefile.client}: Compila únicamente el cliente para uso local.
+\end{itemize}
+
+\subsection{GCC}
+
+El compilador utilizado es \textbf{GCC} (GNU Compiler Collection). Los flags típicos de compilación para este tipo de proyectos incluyen:
+
+\begin{lstlisting}[style=bashstyle, language=bash, numbers=none]
+gcc -o server_bin src/server.c -lpthread -Wall -Wextra -O2
+gcc -o client_bin src/client.c -Wall -Wextra -O2
+\end{lstlisting}
+
+\section{Plataforma de Despliegue: AWS EC2}
+
+\subsection{Configuración de la Instancia}
+
+El servidor está diseñado para ejecutarse en una instancia \textbf{AWS EC2} con Ubuntu. Los requisitos mínimos son:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item Sistema operativo: Ubuntu Server (20.04 LTS o superior).
+  \item \textbf{Security Group}: Puerto \textbf{TCP 5002} abierto para tráfico entrante.
+  \item GCC y Make instalados (\texttt{build-essential}).
+\end{itemize}
+
+\subsection{Script de Control EC2}
+
+El archivo \texttt{ec2-control.sh} automatiza operaciones sobre la instancia EC2 como iniciarla, detenerla o consultar su estado desde la línea de comandos local.
+
+% ═══════════════════════════════════════════════════════════════════════════════
+\chapter{Compilación e Instalación}
+
+\section{Requisitos Previos}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lll}
+    \toprule
+    \textbf{Herramienta} & \textbf{Versión mínima} & \textbf{Plataforma} \\
+    \midrule
+    GCC         & 9.0+ & Servidor (Linux) y Cliente \\
+    GNU Make    & 4.0+ & Ambas plataformas \\
+    Linux/POSIX & —    & Servidor (requerido) \\
+    macOS       & —    & Cliente (opcional) \\
+    \bottomrule
+  \end{tabular}
+  \caption{Dependencias del proyecto}
+\end{table}
+
+\section{Compilación del Servidor (AWS/Linux)}
+
+\begin{tcolorbox}[colback=black!85, colframe=black, title=\textcolor{white}{\textbf{Terminal — Servidor}}]
+\begin{lstlisting}[style=bashstyle, numbers=none]
+# Clonar el repositorio
+git clone https://github.com/riosisraelg/avanceProyecto.git
+cd avanceProyecto
+
+# Compilar e instalar (genera server_bin y symlinks en /usr/local/bin)
+make -f Makefile.server install
+\end{lstlisting}
+\end{tcolorbox}
+
+El objetivo \texttt{install} del \texttt{Makefile.server} realiza las siguientes acciones:
+\begin{enumerate}[leftmargin=1.5em]
+  \item Compila el código fuente del servidor y genera el ejecutable \texttt{server\_bin}.
+  \item Compila los juegos y scripts auxiliares en el directorio \texttt{bin/}.
+  \item Crea enlaces simbólicos (\textit{symlinks}) en \texttt{/usr/local/bin} para que los comandos sean accesibles globalmente.
+\end{enumerate}
+
+\section{Compilación del Cliente (Local)}
+
+\begin{tcolorbox}[colback=black!85, colframe=black, title=\textcolor{white}{\textbf{Terminal — Cliente}}]
+\begin{lstlisting}[style=bashstyle, numbers=none]
+# Compilar el cliente
+make -f Makefile.client
+
+# Ejecutar
+./client_bin
+\end{lstlisting}
+\end{tcolorbox}
+
+% ═══════════════════════════════════════════════════════════════════════════════
+\chapter{Configuración del Servicio Systemd}
+
+\section{¿Por qué Systemd?}
+
+Para un despliegue en producción en AWS EC2, es fundamental que el servidor de procesos se ejecute automáticamente al iniciar la instancia y que se reinicie ante posibles fallos. \textbf{Systemd} es el sistema de inicialización estándar en las distribuciones modernas de Linux (Ubuntu, Debian, CentOS, Fedora) y provee esta funcionalidad.
+
+\section{Archivo de Unidad}
+
+El proyecto incluye el archivo \texttt{proc-manager.service} con el siguiente contenido:
+
+\begin{lstlisting}[caption={Archivo proc-manager.service}, label={lst:systemd}]
+[Unit]
+Description=Remote Process Manager Server
+After=network.target
+
+[Service]
+WorkingDirectory=/root/avanceProyecto
+ExecStart=/root/avanceProyecto/server_bin
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target
+\end{lstlisting}
+
+\section{Instalación y Activación del Servicio}
+
+\begin{tcolorbox}[colback=black!85, colframe=black, title=\textcolor{white}{\textbf{Comandos Systemd}}]
+\begin{lstlisting}[style=bashstyle, numbers=none]
+# Copiar el archivo de servicio
+sudo cp proc-manager.service /etc/systemd/system/
+
+# Recargar la configuración de systemd
+sudo systemctl daemon-reload
+
+# Habilitar el servicio (inicio automático al arranque)
+sudo systemctl enable proc-manager
+
+# Iniciar el servicio
+sudo systemctl start proc-manager
+
+# Verificar el estado
+sudo systemctl status proc-manager
+\end{lstlisting}
+\end{tcolorbox}
+
+\section{Verificación del Estado}
+
+Un ejemplo de salida esperada del comando \texttt{status}:
+
+\begin{tcolorbox}[colback=grisClaro, colframe=verdeCodigo]
+\begin{verbatim}
+$\bullet$ proc-manager.service - Remote Process Manager Server
+     Loaded: loaded (/etc/systemd/system/proc-manager.service; enabled)
+     Active: active (running) since ...
+   Main PID: 1234 (server_bin)
+\end{verbatim}
+\end{tcolorbox}
+
+% ═══════════════════════════════════════════════════════════════════════════════
+\chapter{Uso del Sistema}
+
+\section{Iniciar el Cliente}
+
+\begin{tcolorbox}[colback=black!85, colframe=black, title=\textcolor{white}{\textbf{Terminal}}]
+\begin{lstlisting}[style=bashstyle, numbers=none]
+./client_bin
+# El programa solicita la IP del servidor:
+# Ingrese IP del servidor: 3.137.173.237
+\end{lstlisting}
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=azulTitulo!10, colframe=azulTitulo, title=\textbf{Nota de Disponibilidad}]
+Para fines de evaluación, se ha desplegado una instancia de prueba en la IP \texttt{3.137.173.237}. Esta instancia estará activa y disponible únicamente hasta el \textbf{último jueves de marzo de 2026}.
+\end{tcolorbox}
+
+\section{Comandos Disponibles}
+
+Una vez conectado, el usuario dispone de los siguientes comandos:
+
+\subsection{LIST — Listar Procesos}
+
+\begin{tcolorbox}[colback=black!85, colframe=black]
+\begin{lstlisting}[style=bashstyle, numbers=none]
+> LIST
+USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+root         1  0.0  0.1 169760 10428 ?        Ss   10:00   0:01 /sbin/init
+root       234  0.0  0.0  14856  1940 ?        Ss   10:00   0:00 server_bin
+...
+\end{lstlisting}
+\end{tcolorbox}
+
+Retorna la lista completa de procesos del servidor (equivalente a \texttt{ps aux}), soportando hasta \textbf{64 KB} de datos de respuesta.
+
+\subsection{START — Iniciar un Proceso}
+
+\begin{tcolorbox}[colback=black!85, colframe=black]
+\begin{lstlisting}[style=bashstyle, numbers=none]
+> START sleep 100
+Proceso iniciado con PID: 1337
+
+> START v21
+Proceso iniciado con PID: 1338
+\end{lstlisting}
+\end{tcolorbox}
+
+Inicia cualquier comando del sistema en el servidor. El servidor ejecuta el proceso en segundo plano y retorna su PID.
+
+\subsection{STOP — Detener un Proceso}
+
+\begin{tcolorbox}[colback=black!85, colframe=black]
+\begin{lstlisting}[style=bashstyle, numbers=none]
+> STOP 1337
+Proceso 1337 detenido exitosamente.
+\end{lstlisting}
+\end{tcolorbox}
+
+Envía la señal \texttt{SIGKILL} (o \texttt{SIGTERM}) al proceso especificado por su PID.
+
+\subsection{EXIT — Terminar la Sesión}
+
+\begin{tcolorbox}[colback=black!85, colframe=black]
+\begin{lstlisting}[style=bashstyle, numbers=none]
+> EXIT
+Conexion cerrada.
+\end{lstlisting}
+\end{tcolorbox}
+
+Cierra la conexión TCP de forma limpia.
+
+% ═══════════════════════════════════════════════════════════════════════════════
+\chapter{Aspectos de Implementación}
+
+\section{Modelo de Concurrencia}
+
+El servidor implementa un modelo \textbf{thread-per-connection}: por cada cliente que se conecta, se crea un nuevo hilo POSIX con \texttt{pthread\_create()}. Este hilo maneja toda la comunicación con ese cliente de forma independiente, lo que permite:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item Atender múltiples clientes simultáneamente sin bloqueos.
+  \item Aislar los errores de un cliente del resto.
+  \item Aprovechar los múltiples núcleos del procesador.
+\end{itemize}
+
+El hilo se crea con el atributo \texttt{detached} para liberar sus recursos automáticamente al terminar, sin necesidad de llamar a \texttt{pthread\_join()}.
+
+\section{Manejo de Buffers}
+
+Un desafío clave en la implementación es la transmisión de la lista de procesos, ya que la salida de \texttt{ps aux} puede superar los tamaños de buffer estándar. El proyecto resuelve esto con:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item \textbf{Buffer de recepción extendido}: 64 KB (\texttt{char buffer[65536]}).
+  \item Lectura iterativa mediante \texttt{fgets()} sobre el pipe de \texttt{popen()}.
+  \item Envío fragmentado si la respuesta supera el tamaño máximo de un \texttt{send()}.
+\end{itemize}
+
+\section{Gestión de Procesos con fork/exec}
+
+Para el comando \texttt{START}, el servidor utiliza el patrón clásico \textbf{fork + exec}:
+
+\begin{lstlisting}[caption={Patrón fork/exec para iniciar procesos}, label={lst:forkexec}]
+pid_t pid = fork();
+if (pid == 0) {
+    // Proceso hijo: ejecutar el comando
+    execvp(argv[0], argv);
+    // Si llegamos aqui, execvp falló
+    exit(EXIT_FAILURE);
+} else if (pid > 0) {
+    // Proceso padre: enviar PID al cliente
+    snprintf(response, sizeof(response),
+             "Proceso iniciado con PID: %d\n", pid);
+    send(client_fd, response, strlen(response), 0);
+} else {
+    // Error en fork
+    send(client_fd, "Error al crear proceso\n", 23, 0);
+}
+\end{lstlisting}
+
+\section{Seguridad en Red}
+
+\subsection{Configuración del Security Group en AWS}
+
+Para que el servidor sea accesible desde el exterior, el \textbf{Security Group} de la instancia EC2 debe tener la siguiente regla de entrada:
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{llll}
+    \toprule
+    \textbf{Tipo} & \textbf{Protocolo} & \textbf{Puerto} & \textbf{Origen} \\
+    \midrule
+    TCP personalizado & TCP & 5002 & 0.0.0.0/0 (o IP específica) \\
+    SSH & TCP & 22 & IP del administrador \\
+    \bottomrule
+  \end{tabular}
+  \caption{Reglas del Security Group de AWS EC2}
+\end{table}
+
+\subsection{Consideraciones de Seguridad}
+
+
+
+% ═══════════════════════════════════════════════════════════════════════════════
+\chapter{Pruebas}
+
+\section{Estructura de Pruebas}
+
+El repositorio incluye un directorio \texttt{tests/} dedicado a pruebas de funcionalidad. Las pruebas cubren los casos de uso principales del sistema.
+
+\section{Casos de Prueba Principales}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{p{3.5cm} p{4cm} p{4.5cm}}
+    \toprule
+    \textbf{Caso de Prueba} & \textbf{Precondición} & \textbf{Resultado Esperado} \\
+    \midrule
+    Conexión al servidor & Servidor activo en IP:5002 & Cliente conectado correctamente \\
+    Comando LIST & Conexión establecida & Lista de procesos recibida \\
+    Comando START sleep & Conexión establecida & PID del proceso retornado \\
+    Comando STOP [PID] & Proceso activo con PID & Proceso terminado, confirmación \\
+    Múltiples clientes & Servidor activo & Ambos clientes atendidos simultáneamente \\
+    Desconexión abrupta & Cliente conectado & Servidor no se cuelga, hilo liberado \\
+    Buffer >4KB & Lista larga de procesos & Datos completos recibidos (hasta 64KB) \\
+    \bottomrule
+  \end{tabular}
+  \caption{Casos de prueba del sistema}
+\end{table}
+
+% ═══════════════════════════════════════════════════════════════════════════════
+\chapter{Conclusiones}
+
+\section{Conclusiones}
+
+El proyecto \textbf{Remote Process Manager} demuestra de manera práctica y funcional los conceptos fundamentales de la programación de sistemas en C:
+
+\begin{enumerate}[leftmargin=1.5em]
+  \item \textbf{Programación de red con sockets TCP}: La implementación de un servidor concurrente utilizando las APIs de Berkeley Sockets permite comprender los mecanismos de comunicación de bajo nivel que subyacen a tecnologías modernas como HTTP o gRPC.
+
+  \item \textbf{Concurrencia con pthreads}: El modelo thread-per-connection ilustra los fundamentos del multihilo en sistemas POSIX, incluyendo la creación, sincronización y liberación de recursos de hilos.
+
+  \item \textbf{Gestión de procesos}: El uso de \texttt{fork()}, \texttt{exec()}, \texttt{kill()} y \texttt{popen()} evidencia cómo el sistema operativo gestiona la creación y terminación de procesos a nivel de llamadas al sistema.
+
+  \item \textbf{Despliegue en la nube}: La integración con AWS EC2 y la configuración de systemd introduce conceptos de DevOps y operaciones en entornos de producción.
+\end{enumerate}
+
+
+% ═══════════════════════════════════════════════════════════════════════════════
+\chapter*{Referencias}
+\addcontentsline{toc}{chapter}{Referencias}
+
+\begin{enumerate}[leftmargin=1.5em]
+  \item Stevens, W. R., Fenner, B., \& Rudoff, A. M. (2003). \textit{UNIX Network Programming, Volume 1: The Sockets Networking API} (3rd ed.). Addison-Wesley.
+  \item Kerrisk, M. (2010). \textit{The Linux Programming Interface}. No Starch Press.
+  \item Stevens, W. R., \& Rago, S. A. (2013). \textit{Advanced Programming in the UNIX Environment} (3rd ed.). Addison-Wesley.
+  \item Repositorio del Proyecto: \url{https://github.com/riosisraelg/avanceProyecto}
+  \item Documentación oficial de \texttt{pthreads}: \url{https://man7.org/linux/man-pages/man7/pthreads.7.html}
+  \item Amazon Web Services. (2024). \textit{Amazon EC2 User Guide for Linux Instances}. \url{https://docs.aws.amazon.com/ec2/}
+  \item Freedesktop.org. (2024). \textit{systemd.service — Service unit configuration}. \url{https://www.freedesktop.org/software/systemd/man/systemd.service.html}
+\end{enumerate}
+
+% ─── Apéndice ────────────────────────────────────────────────────────────────
+\appendix
+
+\chapter{Comandos de Referencia Rápida}
+
+\begin{tcolorbox}[colback=grisClaro, colframe=azulTitulo,
+                  title=\textbf{Resumen de Comandos del Sistema}]
+\begin{lstlisting}[style=bashstyle, numbers=none]
+# ── COMPILACIÓN ──────────────────────────────────────
+make -f Makefile.server install   # Compilar e instalar servidor
+make -f Makefile.client           # Compilar cliente
+
+# ── SYSTEMD ──────────────────────────────────────────
+sudo systemctl daemon-reload      # Recargar configuración
+sudo systemctl enable proc-manager
+sudo systemctl start proc-manager
+sudo systemctl stop proc-manager
+sudo systemctl status proc-manager
+sudo journalctl -u proc-manager -f  # Ver logs en tiempo real
+
+# ── CLIENTE ──────────────────────────────────────────
+./client_bin                      # Iniciar cliente
+
+# ── COMANDOS DEL PROTOCOLO ───────────────────────────
+LIST                              # Listar procesos activos
+START <comando> [args]            # Iniciar proceso
+STOP <PID>                        # Detener proceso
+EXIT                              # Cerrar sesión
+\end{lstlisting}
+\end{tcolorbox}
+
+\chapter{Glosario}
+
+\begin{description}[leftmargin=3cm, labelwidth=2.8cm]
+  \item[\textbf{POSIX}] Portable Operating System Interface. Estándar IEEE que define las APIs del sistema operativo para compatibilidad entre sistemas Unix.
+  \item[\textbf{TCP}] Transmission Control Protocol. Protocolo de transporte orientado a conexión que garantiza la entrega ordenada de datos.
+  \item[\textbf{Socket}] Endpoint de comunicación bidireccional entre procesos en red.
+  \item[\textbf{fork()}] Llamada al sistema que crea un proceso hijo como copia del proceso padre.
+  \item[\textbf{exec()}] Familia de llamadas al sistema que reemplaza la imagen del proceso actual con un nuevo programa.
+  \item[\textbf{pthread}] POSIX Thread. Hilo de ejecución dentro de un proceso, gestionado mediante la biblioteca \texttt{libpthread}.
+  \item[\textbf{PID}] Process Identifier. Número entero único asignado por el sistema operativo a cada proceso en ejecución.
+  \item[\textbf{AWS EC2}] Amazon Elastic Compute Cloud. Servicio de cómputo en la nube de Amazon que provee instancias virtuales Linux/Windows.
+  \item[\textbf{Security Group}] Firewall virtual de AWS que controla el tráfico de red entrante y saliente de una instancia EC2.
+  \item[\textbf{Systemd}] Sistema de gestión de servicios y demonios para Linux. Reemplaza a SysVinit en distribuciones modernas.
+  \item[\textbf{Daemon/Demonio}] Proceso que corre en segundo plano sin terminal controlador, típicamente iniciado al arranque del sistema.
+\end{description}
+
+\chapter{Anexos: Evidencia de Funcionamiento}
+
+A continuación se presentan capturas de pantalla que documentan el funcionamiento real del sistema \textbf{Remote Process Manager} en un entorno de red con una instancia \textbf{AWS EC2}.
+
+\section{Conexión al Servidor}
+
+El cliente se inicia solicitando los parámetros de red necesarios para establecer la comunicación TCP con el servidor remoto.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{attachments/Screenshot 2026-02-27 at 23.32.30.png}
+  \caption{Diálogo de conexión inicial con parámetros por defecto (localhost).}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{attachments/Screenshot 2026-02-27 at 23.33.36.png}
+  \caption{Intento de conexión a la instancia AWS EC2 de prueba (IP 3.137.173.237) a través del puerto 5002.}
+\end{figure}
+
+\section{Interfaz Principal y Gestión de Procesos}
+
+Una vez conectado, la TUI despliega la lista completa de procesos en ejecución del servidor remoto.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{attachments/Screenshot 2026-02-27 at 23.36.44.png}
+  \caption{Pantalla principal de la TUI mostrando la lista de procesos remotos (AWS).}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{attachments/Screenshot 2026-02-27 at 23.40.56.png}
+  \caption{Vista detallada del listado de procesos con el prompt interactivo listo para comandos.}
+\end{figure}
+
+\section{Diálogos Modales e Interacción}
+
+La interfaz proporciona herramientas de ayuda y diálogos especializados para simplificar la interacción.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{attachments/Screenshot 2026-02-27 at 23.37.06.png}
+  \caption{Menú de ayuda (F1) que detalla los comandos soportados por el protocolo.}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{attachments/Screenshot 2026-02-27 at 23.37.16.png}
+  \caption{Diálogo especializado (F2) para lanzar nuevos procesos en el servidor remoto.}
+\end{figure}
+
+
+
+\nocite{*}   
+\printbibliography[title={Referencias}]
+
+\end{document}
